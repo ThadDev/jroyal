@@ -1,0 +1,77 @@
+﻿   Γû▓ Next.js 15.1.3
+   - Environments: .env.local
+
+   Creating an optimized production build ...
+ Γ£ô Compiled successfully
+   Linting and checking validity of types ...
+node.exe : Failed to 
+compile.
+At line:1 char:1
++ & "C:\Program 
+Files\nodejs/node.exe" 
+"C:\Program 
+Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo      
+        : NotSpecified  
+  : (Failed to compil   
+ e.:String) [], Remo    
+teException
+    + FullyQualifiedErr 
+   orId : NativeComman  
+  dError
+ 
+
+./src/middleware.ts:15:2
+4
+Type error: Parameter 
+'cookiesToSet' 
+implicitly has an 'any' 
+type.
+
+[0m [90m 13 |[39m    
+                 
+[36mreturn[39m request
+[33m.[39mcookies[33m.
+[39mgetAll()[33m;[39m
+[0m
+[0m [90m 14 |[39m    
+             
+}[33m,[39m[0m
+[0m[31m[1m>[22m[39m
+[90m 15 |[39m         
+        
+setAll(cookiesToSet) 
+{[0m
+[0m [90m    |[39m    
+                    
+[31m[1m^[22m[39m[0m
+[0m [90m 16 |[39m    
+                 cookies
+ToSet[33m.[39mforEach(
+({ name[33m,[39m 
+value }[33m:[39m { 
+name[33m:[39m 
+string[33m;[39m 
+value[33m:[39m 
+string[33m;[39m option
+s[33m?[39m[33m:[39m 
+[33mRecord[39m[33m<[
+39m[33mstring[39m[33m
+,[39m 
+unknown[33m>[39m }) 
+[33m=>[39m[0m
+[0m [90m 17 |[39m    
+                     req
+uest[33m.[39mcookies[
+33m.[39m[36mset[39m(n
+ame[33m,[39m 
+value)[0m
+[0m [90m 18 |[39m    
+                 
+)[33m;[39m[0m
+Static worker exited 
+with code: 1 and 
+signal: null

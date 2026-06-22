@@ -1,0 +1,202 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Inter:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --gold: #D4A832;
+    --gold-light: #F0D98A;
+    --gold-dark: #8A6B1E;
+    --royal-red: #AB2330;
+    --royal-red-light: #C23545;
+    --royal-red-dark: #6B1320;
+    --obsidian: #0A0A0A;
+    --charcoal: #1A1A1A;
+    --cream: #F5F0E8;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    background-color: #0A0A0A;
+    color: #F5F0E8;
+    font-family: 'Inter', system-ui, sans-serif;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-weight: 600;
+    line-height: 1.2;
+  }
+
+  ::selection {
+    background-color: #D4A83233;
+    color: #D4A832;
+  }
+
+  *:focus-visible {
+    outline: 2px solid #AB2330;
+    outline-offset: 2px;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #1A1A1A;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #D4A83244;
+    border-radius: 3px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #D4A83288;
+  }
+}
+
+@layer components {
+  .gold-text {
+    @apply text-gold-500;
+  }
+
+  .gold-gradient-text {
+    background: linear-gradient(135deg, #D4A832 0%, #D4A832 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Premium gold-to-royal-red gradient — for decorative borders/accents ONLY */
+  .gold-royal-border {
+    border-image: linear-gradient(135deg, #D4A832 0%, #E8C85C 40%, #AB2330 100%) 1;
+  }
+
+  .section-padding {
+    @apply py-20 px-4 sm:px-6 lg:px-8;
+  }
+
+  .container-narrow {
+    @apply max-w-4xl mx-auto;
+  }
+
+  .container-wide {
+    @apply max-w-7xl mx-auto;
+  }
+
+  .gold-divider {
+    @apply flex items-center gap-4 my-6;
+  }
+
+  .gold-divider::before,
+  .gold-divider::after {
+    content: '';
+    @apply flex-1 h-px bg-gold-700/40;
+  }
+
+  /* Buttons — Gold primary, Royal Red hover/active */
+  .btn-primary {
+    @apply inline-flex items-center gap-2 px-6 py-3 bg-royal-500 text-white font-semibold text-sm tracking-wide rounded-none transition-all duration-300 hover:bg-gold-500 hover:text-obsidian hover:scale-[1.02] active:scale-[0.98] active:bg-gold-600 disabled:opacity-50 disabled:cursor-not-allowed uppercase;
+  }
+
+  .btn-outline {
+    @apply inline-flex items-center gap-2 px-6 py-3 border border-royal-500 text-royal-500 font-semibold text-sm tracking-wide rounded-none transition-all duration-300 hover:bg-royal-500 hover:text-white hover:border-royal-500 active:scale-[0.98] active:bg-royal-600 active:border-royal-600 disabled:opacity-50 disabled:cursor-not-allowed uppercase;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center gap-2 px-4 py-2 text-cream-200 font-medium text-sm transition-all duration-200 hover:text-gold-500 disabled:opacity-50;
+  }
+
+  .card-dark {
+    @apply bg-charcoal border border-white/5 p-6 transition-all duration-300;
+  }
+
+  .card-dark:hover {
+    @apply border-gold-700/30;
+  }
+
+  .input-dark {
+    @apply w-full px-4 py-3 bg-obsidian/80 border border-white/10 text-cream-100 placeholder:text-white/30 focus:outline-none focus:border-gold-500 focus:ring-1 focus:ring-gold-500/30 transition-all duration-200;
+  }
+
+  .label-dark {
+    @apply block text-sm font-medium text-cream-200 mb-2;
+  }
+
+  .section-title {
+    @apply font-serif text-3xl sm:text-4xl lg:text-5xl font-bold text-cream-100 leading-tight;
+  }
+
+  .section-subtitle {
+    @apply text-base sm:text-lg text-white/60 leading-relaxed;
+  }
+
+  .nav-link {
+    @apply text-sm font-medium text-white/70 hover:text-gold-500 transition-colors duration-200 tracking-wide uppercase;
+  }
+
+  /* Gold shimmer animation */
+  .shimmer-gold {
+    background: linear-gradient(90deg,
+        #D4A832 0%,
+        #F0D98A 50%,
+        #D4A832 100%);
+    background-size: 200% auto;
+    animation: shimmer 3s linear infinite;
+  }
+
+  @keyframes shimmer {
+    from {
+      background-position: 200% center;
+    }
+
+    to {
+      background-position: -200% center;
+    }
+  }
+
+  /* Table styles for admin */
+  .admin-table th {
+    @apply px-4 py-3 text-left text-xs font-semibold text-gold-500 uppercase tracking-wider bg-charcoal/50;
+  }
+
+  .admin-table td {
+    @apply px-4 py-3 text-sm text-cream-200 border-b border-white/5;
+  }
+
+  .admin-table tr:hover td {
+    @apply bg-white/2;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .bg-white\/2 {
+    background-color: rgba(255, 255, 255, 0.02);
+  }
+}

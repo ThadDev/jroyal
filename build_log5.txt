@@ -1,0 +1,72 @@
+﻿   Γû▓ Next.js 15.1.3
+   - Environments: .env.local
+
+   Creating an optimized production build ...
+node.exe : <w> [webpack.
+cache.PackFileCacheStrat
+egy] Serializing big 
+strings (133kiB) 
+impacts deserialization 
+performance (consider 
+using Buffer instead 
+and decode when needed)
+At line:1 char:1
++ & "C:\Program 
+Files\nodejs/node.exe" 
+"C:\Program 
+Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo      
+        : NotSpecified  
+  : (<w> [webpack.ca.   
+ ..de when needed):S    
+tring) [], RemoteEx    
+ception
+    + FullyQualifiedErr 
+   orId : NativeComman  
+  dError
+ 
+ Γ£ô Compiled successfully
+   Linting and checking validity of types ...
+   Collecting page data ...
+   Generating static pages (0/20) ...
+   Generating static pages (5/20) 
+   Generating static pages (10/20) 
+   Generating static pages (15/20) 
+ Γ£ô Generating static pages (20/20)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                              Size     First Load JS
+Γöî Γùï /                                    12.8 kB         165 kB
+Γö£ Γùï /_not-found                          979 B           106 kB
+Γö£ ╞Æ /admin                               145 B           106 kB
+Γö£ ╞Æ /admin/blog                          3.17 kB         163 kB
+Γö£ ╞Æ /admin/gallery                       2.92 kB         168 kB
+Γö£ ╞Æ /admin/login                         2.38 kB         184 kB
+Γö£ ╞Æ /admin/reservations                  2.73 kB         108 kB
+Γö£ ╞Æ /api/admin/export                    145 B           106 kB
+Γö£ ╞Æ /api/admin/reservations              145 B           106 kB
+Γö£ ╞Æ /api/reservations                    145 B           106 kB
+Γö£ ╞Æ /blog                                1.53 kB         153 kB
+Γö£ ╞Æ /blog/[slug]                         184 B           114 kB
+Γö£ Γùï /contact                             838 B           144 kB
+Γö£ Γùï /events                              1.53 kB         153 kB
+Γö£ Γùï /gallery                             1.52 kB         153 kB
+Γö£ Γùï /menu                                1.5 kB          148 kB
+Γö£ Γùï /reservations                        3.57 kB         131 kB
+Γö£ Γùï /robots.txt                          0 B                0 B
+Γöö Γùï /sitemap.xml                         0 B                0 B
++ First Load JS shared by all            105 kB
+  Γö£ chunks/4bd1b696-927b5d87d2664d33.js  52.9 kB
+  Γö£ chunks/517-e7379de3fc4a7cb1.js       50.5 kB
+  Γöö other shared chunks (total)          1.97 kB
+
+
+╞Æ Middleware                             78.9 kB
+
+Γùï  (Static)   prerendered as static content
+╞Æ  (Dynamic)  server-rendered on demand
+
