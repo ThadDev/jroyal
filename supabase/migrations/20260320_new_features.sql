@@ -41,20 +41,21 @@ create trigger on_auth_user_created
 -- -------------------------------------------------------
 -- 3. Orders table (for future cart → checkout flow)
 -- -------------------------------------------------------
-create table if not exists orders (
-  id           uuid primary key default gen_random_uuid(),
-  user_id      uuid references auth.users on delete set null,
-  user_email   text not null,
-  user_name    text not null,
-  items        jsonb not null default '[]',   -- [{id, name, price, priceValue, quantity}]
-  total_price  int  not null default 0,       -- in kobo (₦ × 100)
-  status       text not null default 'pending'
-    check (status in ('pending', 'paid', 'preparing', 'ready', 'delivered', 'cancelled')),
-  payment_ref  text,                          -- Paystack reference
-  payment_method text default 'paystack',
-  notes        text,
-  created_at   timestamptz not null default now(),
-  updated_at   timestamptz not null default now()
+drop table if exists orders cascade;
+
+create table orders (
+  id               uuid primary key default gen_random_uuid(),
+  user_id          uuid references auth.users on delete set null,
+  customer_name    text not null,
+  customer_email   text not null,
+  customer_phone   text not null,
+  delivery_address text not null,
+  items            jsonb not null default '[]',   -- [{cartItemId, mealId, mealTitle, basePrice, quantity, totalPrice, selectedAddOns}]
+  total_amount     int  not null default 0,       -- in kobo (₦ × 100) or naira depending on usage
+  status           text not null default 'pending'
+    check (status in ('pending', 'processing', 'completed', 'cancelled')),
+  created_at       timestamptz not null default now(),
+  updated_at       timestamptz not null default now()
 );
 
 create index if not exists orders_user_id_idx   on orders(user_id);

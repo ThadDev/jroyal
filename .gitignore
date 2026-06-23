@@ -38,6 +38,10 @@ Thumbs.db
 .idea/
 *.swp
 *.swo
+.env 
+.env.local
+
+
 
 # Supabase local dev
 supabase/.temp/
