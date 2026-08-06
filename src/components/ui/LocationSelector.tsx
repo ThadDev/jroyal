@@ -2,40 +2,55 @@
 
 /**
  * LocationSelector — Premium Fullscreen Branch Selector
- * ───────────────────────────────────────────────────────
- * Renders as a fixed overlay above all content until the user selects
- * a branch. Uses only existing design-system classes + Framer Motion.
+ * Fits entirely within a single viewport — no scrolling required.
+ *
+ * Jroyal has two branches in Nsukka:
+ *  • Jroyal Grills n Chops — Behind Flats, Nsukka
+ *  • Jroyal Cafe           — Hilltop, Nsukka
  */
 
-import { useState } from "react";
+import { useState, type FC } from "react";
+import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { MapPin, ArrowRight, Star } from "lucide-react";
+import { MapPin, Flame, Coffee, ArrowRight } from "lucide-react";
 import { useBranch } from "@/context/BranchContext";
 import { BRANCHES, BranchId } from "@/lib/branches";
 
-// ─── Card data ────────────────────────────────────────────────────────────
+// ─── Card data ─────────────────────────────────────────────────────────────
 
 const CARDS: {
   id: BranchId;
-  city: string;
-  emoji: string;
+  Icon: FC<{ size?: number; className?: string }>;
   tagline: string;
+  accentColor: string;
+  accentColorDim: string;
+  badgeLabel: string;
+  imageSrc: string;
+  imageAlt: string;
 }[] = [
-  {
-    id: "nsukka",
-    city: "Nsukka",
-    emoji: "🏛️",
-    tagline: "Our original landmark destination",
-  },
-  {
-    id: "enugu",
-    city: "Enugu",
-    emoji: "✨",
-    tagline: "Premium dining in Enugu GRA",
-  },
-];
+    {
+      id: "grills",
+      Icon: Flame,
+      tagline: "Smoky grills & bold Nigerian flavours",
+      accentColor: "#D4A832",
+      accentColorDim: "rgba(212,168,50,0.10)",
+      badgeLabel: "Grills & Chops",
+      imageSrc: "/grills.png",
+      imageAlt: "Jroyal Grills n Chops",
+    },
+    {
+      id: "cafe",
+      Icon: Coffee,
+      tagline: "Artisan drinks & hilltop views",
+      accentColor: "#AB2330",
+      accentColorDim: "rgba(171,35,48,0.10)",
+      badgeLabel: "Café",
+      imageSrc: "/cafe.png",
+      imageAlt: "Jroyal Cafe",
+    },
+  ];
 
-// ─── Component ────────────────────────────────────────────────────────────
+// ─── Component ─────────────────────────────────────────────────────────────
 
 export default function LocationSelector() {
   const { showSelector, selectBranch } = useBranch();
@@ -45,13 +60,12 @@ export default function LocationSelector() {
   if (!showSelector) return null;
 
   const handleSelect = (id: BranchId) => {
-    if (selecting) return; // prevent double-tap
+    if (selecting) return;
     setSelecting(id);
-    // Let the card "confirm" animation play, then fade out the overlay
     setTimeout(() => {
       setExiting(true);
-      setTimeout(() => selectBranch(id), 450);
-    }, 300);
+      setTimeout(() => selectBranch(id), 400);
+    }, 320);
   };
 
   return (
@@ -62,191 +76,248 @@ export default function LocationSelector() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0, scale: 0.98 }}
-          transition={{ duration: 0.45, ease: "easeInOut" }}
-          className="fixed inset-0 z-[200] flex flex-col items-center justify-center overflow-y-auto"
-          style={{ backgroundColor: "#0A0A0A" }}
+          transition={{ duration: 0.4, ease: "easeInOut" }}
+          // h-screen + overflow-hidden = exactly one viewport, no scroll
+          className="fixed inset-0 z-[200] flex flex-col overflow-hidden"
+          style={{ backgroundColor: "#080808" }}
           id="location-selector-overlay"
           aria-modal="true"
           role="dialog"
-          aria-label="Select your Jroyal Grills location"
+          aria-label="Select your Jroyal branch"
         >
-          {/* Ambient radial glow */}
+          {/* Ambient glows */}
           <div
             className="pointer-events-none absolute inset-0"
             style={{
-              background:
-                "radial-gradient(ellipse 80% 50% at 50% 60%, rgba(201,168,76,0.07) 0%, transparent 70%)",
+              background: [
+                "radial-gradient(ellipse 45% 50% at 25% 50%, rgba(212,168,50,0.05) 0%, transparent 70%)",
+                "radial-gradient(ellipse 45% 50% at 75% 50%, rgba(171,35,48,0.05) 0%, transparent 70%)",
+              ].join(", "),
             }}
           />
 
-          {/* Top decorative line */}
-          <div className="absolute top-0 left-0 right-0 h-px shimmer-gold opacity-40" />
+          {/* Top shimmer */}
+          <div className="absolute top-0 left-0 right-0 h-[2px] shimmer-gold opacity-60" />
 
-          {/* Content wrapper */}
-          <div className="relative z-10 flex flex-col items-center px-4 py-16 w-full max-w-5xl mx-auto">
-            {/* Stars + label */}
-            <motion.div
-              initial={{ opacity: 0, y: -16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.15, duration: 0.7 }}
-              className="flex items-center gap-3 mb-8"
+          {/* ── HEADER ── */}
+          <motion.div
+            initial={{ opacity: 0, y: -16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.08, duration: 0.6 }}
+            className="flex flex-col items-center text-center px-4 pt-8 pb-5 flex-shrink-0"
+          >
+
+            {/* Logo — secondary, smaller */}
+            <Image
+              src="/logo.png"
+              alt="Jroyal"
+              width={100}
+              height={45}
+              className="object-contain opacity-70 mb-4"
+              priority
+            />
+            {/* Headline — biggest, first thing eyes land on */}
+            <h1
+              className="font-serif font-bold leading-tight mb-1 text-gold-500"
+              style={{
+                fontSize: "clamp(1.8rem, 4.5vw, 3rem)",
+
+              }}
             >
-              <div className="h-px w-10 bg-gold-700/50" />
-              <div className="flex items-center gap-1">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} size={9} className="fill-gold-500 text-gold-500" />
-                ))}
-              </div>
-              <span className="text-gold-500 text-[10px] tracking-[0.35em] uppercase font-light">
-                Select Your Location
-              </span>
-              <div className="h-px w-10 bg-gold-700/50" />
-            </motion.div>
+              Select Branch
+            </h1>
 
-            {/* Brand heading */}
-            <motion.h1
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.25, duration: 0.9 }}
-              className="font-serif text-4xl sm:text-5xl lg:text-6xl font-bold text-white text-center leading-[1.1] mb-3"
+            <p
+              className="text-xs tracking-wide mb-4"
+              style={{ color: "rgba(255,255,255,0.38)" }}
             >
-              Mama{" "}
-              <span className="gold-gradient-text italic">Onyinye</span>
-            </motion.h1>
+              Two locations in Nsukka — pick the one that calls to you
+            </p>
 
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.45, duration: 0.7 }}
-              className="text-white/40 text-sm tracking-widest uppercase mb-14 text-center"
-            >
-              Fine Dining &amp; Events
-            </motion.p>
 
-            {/* Branch cards */}
-            <motion.div
-              initial={{ opacity: 0, y: 28 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.55, duration: 0.8 }}
-              className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-3xl"
-            >
-              {CARDS.map((card, i) => {
-                const branch = BRANCHES[card.id];
-                const isSelected = selecting === card.id;
 
-                return (
-                  <motion.button
-                    key={card.id}
-                    id={`location-card-${card.id}`}
-                    onClick={() => handleSelect(card.id)}
-                    whileHover={{ scale: 1.025, y: -3 }}
-                    whileTap={{ scale: 0.975 }}
-                    animate={
-                      isSelected
-                        ? { scale: 1.04, borderColor: "rgba(201,168,76,0.9)" }
-                        : {}
-                    }
-                    transition={{ type: "spring", stiffness: 260, damping: 22 }}
-                    className="group relative text-left cursor-pointer focus-visible:outline-none"
-                    aria-label={`Select ${branch.name} in ${branch.city}`}
-                    style={{ animationDelay: `${i * 0.08}s` }}
-                  >
-                    {/* Card body */}
+            {/* Divider */}
+            <div
+              className="mt-5 w-48 h-px"
+              style={{
+                background:
+                  "linear-gradient(90deg, transparent, #D4A832 35%, #AB2330 65%, transparent)",
+              }}
+            />
+          </motion.div>
+
+          {/* ── CARDS — fill remaining height ── */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.25, duration: 0.65 }}
+            className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4 px-4 pb-4 min-h-0"
+          >
+            {CARDS.map((card, i) => {
+              const branch = BRANCHES[card.id];
+              const isSelected = selecting === card.id;
+              const BranchIcon = card.Icon;
+
+              return (
+                <motion.button
+                  key={card.id}
+                  id={`location-card-${card.id}`}
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.35 + i * 0.1, duration: 0.55 }}
+                  whileHover={{ y: -3 }}
+                  whileTap={{ scale: 0.985 }}
+                  onClick={() => handleSelect(card.id)}
+                  className="group relative flex flex-col overflow-hidden text-left focus-visible:outline-none h-full"
+                  style={{
+                    border: `1px solid ${isSelected
+                      ? card.accentColor + "88"
+                      : "rgba(255,255,255,0.08)"
+                      }`,
+                    transition: "border-color 0.3s ease",
+                    backgroundColor: "#111111",
+                  }}
+                  aria-label={`Select ${branch.name}`}
+                >
+                  {/* Hover border highlight */}
+                  <div
+                    className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+                    style={{
+                      boxShadow: `inset 0 0 0 1px ${card.accentColor}44`,
+                    }}
+                  />
+
+                  {/* ── Image — top 55% of card ── */}
+                  <div className="relative flex-shrink-0" style={{ height: "52%" }}>
+                    <Image
+                      src={card.imageSrc}
+                      alt={card.imageAlt}
+                      fill
+                      className="object-cover transition-transform duration-700 group-hover:scale-[1.05]"
+                      sizes="(max-width: 768px) 100vw, 50vw"
+                    />
+                    {/* Bottom fade */}
                     <div
-                      className="relative h-full border transition-all duration-300 p-8 flex flex-col gap-6 overflow-hidden"
+                      className="absolute inset-0"
                       style={{
-                        backgroundColor: "#1A1A1A",
-                        borderColor: isSelected
-                          ? "rgba(201,168,76,0.7)"
-                          : "rgba(201,168,76,0.15)",
+                        background:
+                          "linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.6) 100%)",
+                      }}
+                    />
+                    {/* Colour accent fade on hover */}
+                    <div
+                      className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-400"
+                      style={{
+                        background: `linear-gradient(135deg, ${card.accentColorDim} 0%, transparent 60%)`,
+                      }}
+                    />
+                    {/* Badge */}
+                    <div className="absolute top-3 left-3">
+                      <span
+                        className="inline-flex items-center gap-1.5 text-[9px] tracking-[0.28em] uppercase font-semibold px-2.5 py-1 backdrop-blur-sm"
+                        style={{
+                          color: card.accentColor,
+                          backgroundColor: "rgba(0,0,0,0.6)",
+                          border: `1px solid ${card.accentColor}44`,
+                        }}
+                      >
+                        <BranchIcon size={8} />
+                        {card.badgeLabel}
+                      </span>
+                    </div>
+                    {/* Selected ring */}
+                    {isSelected && (
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="absolute inset-0 pointer-events-none"
+                        style={{
+                          boxShadow: `inset 0 0 0 2px ${card.accentColor}88`,
+                        }}
+                      />
+                    )}
+                  </div>
+
+                  {/* ── Card body — bottom 45% ── */}
+                  <div
+                    className="flex flex-col flex-1 px-5 py-4 gap-3 min-h-0"
+                    style={{
+                      backgroundColor: isSelected
+                        ? card.accentColorDim
+                        : "transparent",
+                      transition: "background-color 0.3s ease",
+                    }}
+                  >
+                    {/* Name + tagline */}
+                    <div className="flex-1 min-h-0">
+                      <h2
+                        className="font-serif font-bold leading-tight mb-1"
+                        style={{ fontSize: "clamp(1.1rem, 2.5vw, 1.5rem)", color: "#F5F0E8" }}
+                      >
+                        {branch.name}
+                      </h2>
+                      <p
+                        className="text-xs leading-relaxed"
+                        style={{ color: "rgba(255,255,255,0.45)" }}
+                      >
+                        {card.tagline}
+                      </p>
+                    </div>
+
+                    {/* Address */}
+                    <p
+                      className="text-[11px] flex items-start gap-1.5"
+                      style={{ color: "rgba(255,255,255,0.28)" }}
+                    >
+                      <MapPin
+                        size={10}
+                        className="mt-0.5 flex-shrink-0"
+                        style={{ color: card.accentColor }}
+                      />
+                      {branch.address}
+                    </p>
+
+                    {/* SELECT button */}
+                    <div
+                      className="flex items-center justify-between py-2.5 px-4 transition-all duration-300"
+                      style={{
+                        backgroundColor: isSelected
+                          ? card.accentColor
+                          : "transparent",
+                        border: `1.5px solid ${card.accentColor}`,
+                        color: isSelected ? "#080808" : card.accentColor,
                       }}
                     >
-                      {/* Hover glow */}
-                      <div
-                        className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
-                        style={{
-                          background:
-                            "radial-gradient(ellipse 70% 60% at 50% 0%, rgba(201,168,76,0.08) 0%, transparent 70%)",
-                        }}
-                      />
-
-                      {/* Selection confirmed ring */}
-                      {isSelected && (
-                        <motion.div
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          className="absolute inset-0 pointer-events-none"
-                          style={{
-                            boxShadow: "inset 0 0 0 2px rgba(201,168,76,0.6)",
-                          }}
+                      <span
+                        className="text-xs font-bold tracking-[0.18em] uppercase"
+                      >
+                        {isSelected ? "Confirmed ✓" : "Select"}
+                      </span>
+                      {!isSelected && (
+                        <ArrowRight
+                          size={13}
+                          className="transition-transform duration-200 group-hover:translate-x-1"
                         />
                       )}
-
-                      {/* Top: icon + city */}
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <span className="text-3xl mb-3 block">{card.emoji}</span>
-                          <p className="text-gold-500 text-[10px] tracking-[0.3em] uppercase font-light mb-1">
-                            {card.city}, Nigeria
-                          </p>
-                          <h2 className="font-serif text-2xl sm:text-3xl font-bold text-white leading-tight">
-                            {branch.shortName}
-                          </h2>
-                        </div>
-
-                        {/* Arrow */}
-                        <div
-                          className="w-10 h-10 border flex items-center justify-center flex-shrink-0 transition-all duration-300 group-hover:border-gold-500 group-hover:text-gold-500 mt-1"
-                          style={{
-                            borderColor: "rgba(201,168,76,0.25)",
-                            color: "rgba(255,255,255,0.3)",
-                          }}
-                        >
-                          <ArrowRight
-                            size={16}
-                            className="group-hover:translate-x-0.5 transition-transform duration-200"
-                          />
-                        </div>
-                      </div>
-
-                      {/* Divider */}
-                      <div
-                        className="h-px w-full transition-all duration-300 group-hover:opacity-100"
-                        style={{
-                          background:
-                            "linear-gradient(90deg, rgba(201,168,76,0.3), transparent)",
-                          opacity: 0.5,
-                        }}
-                      />
-
-                      {/* Bottom: name + address */}
-                      <div>
-                        <p className="text-white/80 text-sm font-medium mb-2">
-                          {branch.name}
-                        </p>
-                        <p className="text-white/35 text-xs leading-relaxed flex items-start gap-1.5">
-                          <MapPin size={11} className="text-gold-700 mt-0.5 flex-shrink-0" />
-                          {branch.address}
-                        </p>
-                      </div>
                     </div>
-                  </motion.button>
-                );
-              })}
-            </motion.div>
+                  </div>
+                </motion.button>
+              );
+            })}
+          </motion.div>
 
-            {/* Footnote */}
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.9, duration: 0.6 }}
-              className="mt-10 text-white/20 text-xs text-center tracking-wide"
-            >
-              Your preference is saved locally. You can change it anytime.
-            </motion.p>
-          </div>
+          {/* Footnote */}
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.8, duration: 0.5 }}
+            className="text-center text-[10px] pb-3 flex-shrink-0"
+            style={{ color: "rgba(255,255,255,0.15)" }}
+          >
+            Your preference is saved locally — change it anytime from the menu.
+          </motion.p>
 
-          {/* Bottom decorative line */}
+          {/* Bottom shimmer */}
           <div className="absolute bottom-0 left-0 right-0 h-px shimmer-gold opacity-20" />
         </motion.div>
       )}

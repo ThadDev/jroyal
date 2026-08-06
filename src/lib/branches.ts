@@ -2,17 +2,17 @@
  * Centralized Branch Configuration
  * ─────────────────────────────────
  * Single source of truth for all per-branch data.
- * Add future branches here — components pick them up automatically.
+ * Jroyal has two branches, both in Nsukka, Enugu State, Nigeria.
  */
 
-export type BranchId = "nsukka" | "enugu";
+export type BranchId = "grills" | "cafe";
 
 export interface Branch {
   /** Internal identifier */
   id: BranchId;
-  /** Full brand name, e.g. "Jroyal Grills" */
+  /** Full brand name, e.g. "Jroyal Grills n Chops" */
   name: string;
-  /** Short qualifier, e.g. "Nsukka" */
+  /** Short qualifier shown on card heading */
   shortName: string;
   /** City label */
   city: string;
@@ -49,74 +49,72 @@ export interface Branch {
 // ─── Branch definitions ────────────────────────────────────────────────────
 
 export const BRANCHES: Record<BranchId, Branch> = {
-  nsukka: {
-    id: "nsukka",
-    name: "Jroyal Grills",
-    shortName: "Nsukka",
+  grills: {
+    id: "grills",
+    name: "Jroyal Grills n Chops",
+    shortName: "Grills n Chops",
     city: "Nsukka",
-    address:
-      "Opposite Flat Gate, Behind Flat, Nsukka, 410001, Enugu State, Nigeria",
+    address: "Behind Flats, Nsukka, Enugu State, Nigeria",
     phone: "+234 705 966 6459",
-    // NEXT_PUBLIC_ vars are inlined at build time — safe to reference here
     whatsapp:
       (process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? "").replace(/\D/g, "") ||
       "2347059666459",
     mapsEmbedUrl:
       process.env.NEXT_PUBLIC_GOOGLE_MAPS_EMBED_URL ||
-      "https://maps.google.com/maps?q=Opposite+Flat+Gate+Behind+Flat+Nsukka+Enugu+Nigeria&output=embed",
+      "https://maps.google.com/maps?q=Behind+Flats+Nsukka+Enugu+Nigeria&output=embed",
     mapsDirectionsUrl:
-      "https://maps.google.com/maps?q=Opposite+Flat+Gate+Behind+Flat+Nsukka+Enugu+Nigeria",
+      "https://maps.google.com/maps?q=Behind+Flats+Nsukka+Enugu+Nigeria",
     tagline:
-      "Premium grills, Nigerian & continental cuisine in the heart of Nsukka. A destination for exceptional dining, unforgettable events, and warm hospitality.",
-    heroLocationLine: "Behind Flat Gate, Nsukka • Open from 4PM daily",
+      "Premium grills, smoky chops, and bold Nigerian flavours right behind Flats Nsukka. A destination for sizzling plates, unforgettable evenings, and warm hospitality.",
+    heroLocationLine: "Behind Flats, Nsukka • Open from 4PM daily",
     heroEstLabel: "Est. Nsukka, Nigeria",
-    aboutShortName: "Jroyal",
+    aboutShortName: "Grills n Chops",
     aboutParagraphs: [
-      "Jroyal Grills was born from a passion for crafting extraordinary grilled meats and sharing the rich, vibrant flavours of Nigerian cuisine. What started as a bold culinary vision has grown into one of Nsukka's most celebrated dining destinations.",
-      "Nestled in the heart of Nsukka, we have served thousands of guests — from intimate family gatherings to grand corporate events — always with the same warmth, excellence, and authenticity that defines us.",
-      "Our expert grill masters draw inspiration from across Nigeria and the continent, crafting menus that honour tradition while embracing bold, contemporary flavours.",
+      "Jroyal Grills n Chops was born from a deep passion for exceptional grilled meats and the rich, vibrant flavours of Nigerian cuisine. What started as a bold culinary vision has grown into one of Nsukka's most celebrated dining spots.",
+      "Nestled behind Flats in the heart of Nsukka, we have served thousands of guests — from intimate hangouts to grand celebrations — always with the same warmth, excellence, and authenticity that defines us.",
+      "Our expert grill masters draw inspiration from across Nigeria and the continent, crafting bold, smoky menus that honour tradition while embracing contemporary flavours.",
     ],
-    aboutStatLabel: "Years of culinary excellence in Nsukka",
+    aboutStatLabel: "Years of grilling excellence in Nsukka",
     footerBlurb:
-      "A premium grilling destination celebrating the finest in Nigerian cuisine and continental flavours, in the heart of Nsukka.",
-    ctaBannerTitle: "Ready to Experience Jroyal Grills?",
+      "A premium grilling destination celebrating the finest in Nigerian cuisine and continental flavours, behind Flats Nsukka.",
+    ctaBannerTitle: "Ready to Experience Jroyal Grills n Chops?",
     seoDescription:
-      "Experience exceptional grills, private events, and outside catering at Jroyal Grills — Nsukka's premier restaurant. Opposite Flat Gate, Behind Flat, Nsukka.",
+      "Experience exceptional grills, smoky chops, private events, and outside catering at Jroyal Grills n Chops — behind Flats, Nsukka.",
   },
 
-  enugu: {
-    id: "enugu",
-    name: "Jroyal Grills",
-    shortName: "Enugu",
-    city: "Enugu",
-    address: "Enugu, Enugu State, Nigeria",
+  cafe: {
+    id: "cafe",
+    name: "Jroyal Cafe",
+    shortName: "Cafe",
+    city: "Nsukka",
+    address: "Hilltop, Nsukka, Enugu State, Nigeria",
     phone: "+234 705 966 6459",
     whatsapp: "2347059666459",
     mapsEmbedUrl:
-      "https://maps.google.com/maps?q=Jroyal+Grills+Enugu+Nigeria&output=embed",
+      "https://maps.google.com/maps?q=Hilltop+Nsukka+Enugu+Nigeria&output=embed",
     mapsDirectionsUrl:
-      "https://maps.google.com/maps?q=Jroyal+Grills+Enugu+Nigeria",
+      "https://maps.google.com/maps?q=Hilltop+Nsukka+Enugu+Nigeria",
     tagline:
-      "The same legendary grills and flavours that made Jroyal Grills famous, now in Enugu. Fine dining, events, and warm Nigerian hospitality.",
-    heroLocationLine: "Enugu • Open from 4PM daily",
-    heroEstLabel: "Est. Enugu, Nigeria",
-    aboutShortName: "Jroyal",
+      "A serene café experience with premium drinks, light bites, and breathtaking hilltop views. The perfect escape for relaxed dining and vibrant social moments in Nsukka.",
+    heroLocationLine: "Hilltop, Nsukka • Open from 10AM daily",
+    heroEstLabel: "Est. Nsukka, Nigeria",
+    aboutShortName: "Jroyal Cafe",
     aboutParagraphs: [
-      "Jroyal Grills brings the same legendary flavours and premium grilling experience to Enugu. Our Enugu location is a testament to our mission: making exceptional Nigerian cuisine and grills accessible across the nation.",
-      "We serve discerning guests who demand the finest — from intimate lunches to vibrant dinner gatherings — all wrapped in the warm, authentic hospitality that defines the Jroyal experience.",
-      "Our culinary team draws from a rich tradition of Nigerian and continental cooking, delivering menus that honour heritage while embracing the contemporary palate.",
+      "Jroyal Cafe brings a refined café culture to the heights of Nsukka, offering premium drinks, artisan light bites, and a welcoming atmosphere that sets us apart.",
+      "Perched at Hilltop, our café is a haven for those who appreciate quality and ambiance — whether catching up with friends, working remotely, or simply soaking in the view with a great cup of coffee.",
+      "Every menu item is crafted with care, drawing from local ingredients and global café trends to deliver an experience that feels both familiar and extraordinary.",
     ],
-    aboutStatLabel: "Years of culinary excellence",
+    aboutStatLabel: "Years of café excellence in Nsukka",
     footerBlurb:
-      "A premium grilling destination celebrating the finest in Nigerian cuisine and continental flavours in Enugu.",
-    ctaBannerTitle: "Ready to Experience Jroyal Grills?",
+      "A premium café destination offering artisan drinks, light bites, and warm hospitality atop Hilltop, Nsukka.",
+    ctaBannerTitle: "Ready to Visit Jroyal Cafe?",
     seoDescription:
-      "Experience exceptional grills, private events, and outside catering at Jroyal Grills Enugu — fine dining and warm Nigerian hospitality.",
+      "Experience premium drinks, light bites, and a relaxed hilltop atmosphere at Jroyal Cafe — Hilltop, Nsukka.",
   },
 };
 
 /** Default branch rendered on SSR (best for SEO — canonical location) */
-export const DEFAULT_BRANCH_ID: BranchId = "nsukka";
+export const DEFAULT_BRANCH_ID: BranchId = "grills";
 export const DEFAULT_BRANCH: Branch = BRANCHES[DEFAULT_BRANCH_ID];
 
 /** localStorage key */

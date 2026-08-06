@@ -3,7 +3,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { Award, Heart, Leaf } from "lucide-react";
 import { useBranch } from "@/context/BranchContext";
-import { useRef } from "react";
+
 
 const values = [
     { icon: Heart, label: "Passion", desc: "Every dish crafted with love and cultural pride" },
@@ -13,7 +13,10 @@ const values = [
 
 export default function AboutSection() {
     const { branch } = useBranch();
-    const videoRef = useRef<HTMLVideoElement>(null);
+
+    // Pick the correct video for the active branch
+    const videoSrc =
+        branch.id === "cafe" ? "/cafe-video.mp4" : "/about-story-web.mp4";
 
     return (
         <section className="section-padding bg-obsidian overflow-hidden" id="about">
@@ -35,13 +38,13 @@ export default function AboutSection() {
                             <div className="absolute -bottom-[6px] -right-[6px] w-14 h-14 border-b-4 border-r-4 border-royal-500 pointer-events-none z-10" />
 
                             <video
-                                ref={videoRef}
-                                src="/about-story-web.mp4"
+                                key={videoSrc}
+                                src={videoSrc}
                                 autoPlay
                                 muted
                                 loop
                                 playsInline
-                                poster="/assets/images/about-poster.jpg"
+                                poster="/about-story-poster.jpg"
                                 className="absolute inset-0 w-full h-full object-cover"
                                 aria-label={`${branch.name} story video`}
                             />
