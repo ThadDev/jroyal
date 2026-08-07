@@ -1,8 +1,9 @@
 "use client";
 import { useRef } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { motion, useScroll, useTransform } from "framer-motion";
-import { ChevronDown, Star, MapPin } from "lucide-react";
+import { ChevronDown, MapPin } from "lucide-react";
 import { useBranch } from "@/context/BranchContext";
 
 export default function HeroSection() {
@@ -24,11 +25,18 @@ export default function HeroSection() {
         >
             {/* Background with parallax */}
             <motion.div style={{ y }} className="absolute inset-0 z-0">
-                <div
-                    className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-                    style={{
-                        backgroundImage: `url('/hero.jpg')`,
-                    }}
+                {/*
+                 * Use Next/Image (not CSS background) so Next.js serves AVIF/WebP
+                 * with a responsive srcset. priority=true adds a native <link rel=preload>.
+                 */}
+                <Image
+                    src="/hero.jpg"
+                    alt="Jroyal Grills — Premium Dining Nsukka"
+                    fill
+                    priority
+                    quality={85}
+                    className="object-cover object-center"
+                    sizes="100vw"
                 />
                 <div className="absolute inset-0 bg-gradient-to-b from-obsidian/60 via-obsidian/50 to-obsidian" />
                 <div className="absolute inset-0 bg-gradient-to-r from-obsidian/40 via-transparent to-obsidian/20" />

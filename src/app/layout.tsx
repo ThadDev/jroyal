@@ -1,10 +1,29 @@
 import type { Metadata } from "next";
+import { Playfair_Display, Inter } from "next/font/google";
 import "./globals.css";
 import { ToastProvider } from "@/context/ToastContext";
 import { BranchProvider } from "@/context/BranchContext";
 import WhatsAppButton from "@/components/ui/WhatsAppButton";
 import LocationSelector from "@/components/ui/LocationSelector";
 import NextTopLoader from "nextjs-toploader";
+
+// ── next/font: fonts are inlined (no external round-trip), font-display:swap ──
+const playfair = Playfair_Display({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  style: ["normal", "italic"],
+  variable: "--font-playfair",
+  display: "swap",
+  preload: true,
+});
+
+const inter = Inter({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+  variable: "--font-inter",
+  display: "swap",
+  preload: true,
+});
 
 /**
  * Root metadata — Jroyal Grills, Nsukka.
@@ -70,18 +89,17 @@ export default function RootLayout({
     children: React.ReactNode;
 }) {
     return (
-        <html lang="en">
+        <html lang="en" className={`${playfair.variable} ${inter.variable}`}>
             <head>
-                <link rel="preconnect" href="https://fonts.googleapis.com" />
+                {/* Preload the LCP image (hero) so it starts loading ASAP */}
                 <link
-                    rel="preconnect"
-                    href="https://fonts.gstatic.com"
-                    crossOrigin="anonymous"
+                    rel="preload"
+                    as="image"
+                    href="/hero.jpg"
+                    fetchPriority="high"
                 />
-                <link
-                    href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Inter:wght@300;400;500;600;700&display=swap"
-                    rel="stylesheet"
-                />
+                {/* DNS prefetch for remote image CDN */}
+                <link rel="dns-prefetch" href="https://i.pinimg.com" />
                 {/*
                  * JSON-LD Structured Data — Jroyal Grills restaurant
                  */}

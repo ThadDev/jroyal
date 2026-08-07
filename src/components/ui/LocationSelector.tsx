@@ -202,6 +202,8 @@ export default function LocationSelector() {
                       src={card.imageSrc}
                       alt={card.imageAlt}
                       fill
+                      priority
+                      quality={85}
                       className="object-cover transition-transform duration-700 group-hover:scale-[1.05]"
                       sizes="(max-width: 768px) 100vw, 50vw"
                     />

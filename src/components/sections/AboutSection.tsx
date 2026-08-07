@@ -44,6 +44,7 @@ export default function AboutSection() {
                                 muted
                                 loop
                                 playsInline
+                                preload="none"
                                 poster="/about-story-poster.jpg"
                                 className="absolute inset-0 w-full h-full object-cover"
                                 aria-label={`${branch.name} story video`}

@@ -1,12 +1,18 @@
 import type { Metadata } from "next";
+import dynamic from "next/dynamic";
+
+// HeroSection is above-the-fold — eager import so it SSRs immediately (best LCP)
 import HeroSection from "@/components/sections/HeroSection";
-import AboutSection from "@/components/sections/AboutSection";
-import FeaturedMenuSection from "@/components/sections/FeaturedMenuSection";
-import ServicesSection from "@/components/sections/ServicesSection";
-import GalleryPreviewSection from "@/components/sections/GalleryPreviewSection";
-import TestimonialsSection from "@/components/sections/TestimonialsSection";
-import HomeCTABanner from "./HomeCTABanner";
-import MapSection from "@/components/sections/MapSection";
+
+// All below-fold sections are lazy-loaded (code-split) to shrink the initial JS bundle.
+// ssr:true keeps server-rendering for SEO while deferring the client-side JS.
+const AboutSection = dynamic(() => import("@/components/sections/AboutSection"), { ssr: true });
+const ServicesSection = dynamic(() => import("@/components/sections/ServicesSection"), { ssr: true });
+const FeaturedMenuSection = dynamic(() => import("@/components/sections/FeaturedMenuSection"), { ssr: true });
+const GalleryPreviewSection = dynamic(() => import("@/components/sections/GalleryPreviewSection"), { ssr: true });
+const TestimonialsSection = dynamic(() => import("@/components/sections/TestimonialsSection"), { ssr: true });
+const HomeCTABanner = dynamic(() => import("./HomeCTABanner"), { ssr: true });
+const MapSection = dynamic(() => import("@/components/sections/MapSection"), { ssr: true });
 
 export const metadata: Metadata = {
     title: "Jroyal Grills – Premium Grills & Fine Dining | Nsukka, Nigeria",
@@ -20,13 +26,10 @@ export default function HomePage() {
             <HeroSection />
             <AboutSection />
             <ServicesSection />
-
             <FeaturedMenuSection />
             <GalleryPreviewSection />
             <TestimonialsSection />
-            {/* Dynamic CTABanner — client wrapper reads branch context */}
             <HomeCTABanner />
-            {/* MapSection reads branch mapsEmbedUrl internally */}
             <MapSection />
         </>
     );

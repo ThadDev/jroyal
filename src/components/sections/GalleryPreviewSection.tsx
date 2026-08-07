@@ -56,6 +56,8 @@ export default function GalleryPreviewSection() {
                                 src={img.src}
                                 alt={img.alt}
                                 fill
+                                quality={75}
+                                loading={i < 2 ? "eager" : "lazy"}
                                 className="object-cover transition-transform duration-700 group-hover:scale-110"
                                 sizes="(max-width: 768px) 50vw, 33vw"
                             />
