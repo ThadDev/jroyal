@@ -84,7 +84,7 @@ export const BRANCHES: Record<BranchId, Branch> = {
 
   cafe: {
     id: "cafe",
-    name: "Jroyal Cafe",
+    name: "Cafe by Jroyal",
     shortName: "Cafe",
     city: "Nsukka",
     address: "Hilltop, Nsukka, Enugu State, Nigeria",
