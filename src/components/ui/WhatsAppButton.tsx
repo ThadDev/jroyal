@@ -10,7 +10,7 @@ export default function WhatsAppButton() {
     const [showLabel, setShowLabel] = useState(false);
 
     if (pathname.startsWith("/admin")) return null;
-    const phoneNumber = "2348163176872";
+    const phoneNumber = "2347059666459";
     const message = "Hello Jroyal Grills, I would like to place an order.";
 
     useEffect(() => {

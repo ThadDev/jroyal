@@ -61,9 +61,9 @@ export const BRANCHES: Record<BranchId, Branch> = {
       "2347059666459",
     mapsEmbedUrl:
       process.env.NEXT_PUBLIC_GOOGLE_MAPS_EMBED_URL ||
-      "https://maps.google.com/maps?q=Behind+Flats+Nsukka+Enugu+Nigeria&output=embed",
+      "https://maps.google.com/maps?q=jroyal+nsukka&output=embed&ftid=0x1044e7896dd9098d:0x46821b79fa456ed8",
     mapsDirectionsUrl:
-      "https://maps.google.com/maps?q=Behind+Flats+Nsukka+Enugu+Nigeria",
+      "https://www.google.com/maps/place/jroyal+nsukka/data=!4m2!3m1!1s0x1044e7896dd9098d:0x46821b79fa456ed8",
     tagline:
       "Premium grills, smoky chops, and bold Nigerian flavours right behind Flats Nsukka. A destination for sizzling plates, unforgettable evenings, and warm hospitality.",
     heroLocationLine: "Behind Flats, Nsukka • Open from 4PM daily",
