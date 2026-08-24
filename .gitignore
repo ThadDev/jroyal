@@ -45,3 +45,4 @@ Thumbs.db
 
 # Supabase local dev
 supabase/.temp/
+.env*

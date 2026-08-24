@@ -23,7 +23,7 @@ async function getStats() {
             { data: recent }
         ] = await Promise.all([
             supabase.from("reservations").select("*", { count: "exact", head: true }).eq("status", "pending"),
-            supabase.from("orders").select("*", { count: "exact", head: true }).eq("status", "pending"),
+            supabase.from("orders").select("*", { count: "exact", head: true }).eq("payment_status", "paid").eq("status", "processing"),
             supabase.from("reservations").select("*", { count: "exact", head: true }).eq("date", today).eq("status", "confirmed"),
             supabase.from("profiles").select("*", { count: "exact", head: true }),
             supabase.from("reservations").select("*").order("created_at", { ascending: false }).limit(5),

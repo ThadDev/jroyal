@@ -163,7 +163,38 @@ export interface Testimonial {
 }
 
 // ── Orders ───────────────────────────────────────────────────
-export type OrderStatus = "pending" | "processing" | "completed" | "cancelled";
+/**
+ * Full order lifecycle:
+ *   pending       → payment_status=unpaid, order placed but not paid
+ *   processing    → payment confirmed, kitchen notified
+ *   preparing     → kitchen actively preparing
+ *   ready         → food ready, awaiting driver pickup
+ *   out_for_delivery → driver picked up, en route to customer
+ *   completed     → delivered successfully
+ *   cancelled     → order cancelled
+ */
+export type OrderStatus =
+    | "pending"
+    | "processing"
+    | "preparing"
+    | "ready"
+    | "out_for_delivery"
+    | "completed"
+    | "cancelled";
+
+/** Maps backend status → customer-friendly label */
+export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
+    pending: "Pending Payment",
+    processing: "Order Received",
+    preparing: "Being Prepared",
+    ready: "Ready for Pickup",
+    out_for_delivery: "On the Way",
+    completed: "Delivered",
+    cancelled: "Cancelled",
+};
+
+/** Payment lifecycle — separate from kitchen/fulfilment status */
+export type PaymentStatus = "unpaid" | "paid" | "failed" | "cancelled";
 
 export interface Order {
     id: string;
@@ -175,16 +206,41 @@ export interface Order {
     status: OrderStatus;
     total_amount: number;
     items: CartItem[]; // Can be stored as JSONB in Supabase
+    // ── Payment fields (added by Paystack integration) ─────────
+    payment_status: PaymentStatus;
+    payment_reference: string | null;
+    paystack_txn_id: string | null;
+    payment_verified: boolean;
+    // ── Delivery fields ─────────────────────────────────────────
+    driver_id: string | null;
+    driver?: Driver | null; // joined when fetching with driver info
+    created_at: string;
+    updated_at: string;
+}
+
+// ── Drivers ──────────────────────────────────────────────────
+export type DriverStatus = "active" | "inactive";
+export type VehicleType = "motorcycle" | "car" | "bicycle" | "on_foot" | "van";
+
+export interface Driver {
+    id: string;
+    name: string;
+    phone: string;
+    avatar_url: string | null;
+    vehicle_type: VehicleType | null;
+    vehicle_plate: string | null;
+    status: DriverStatus;
+    notes: string | null;
     created_at: string;
     updated_at: string;
 }
 
 // ── Notifications ────────────────────────────────────────────
-export type NotificationType = "order" | "reservation" | "signup" | "payment" | "cancellation" | "system";
+export type NotificationType = "order" | "reservation" | "signup" | "payment" | "cancellation" | "system" | "order_status";
 
 export interface AppNotification {
     id: string;
-    user_id: string | null; // null for broadcast/admin-only if we define a specific user_id for admin. Or we can just use user_id = admin's id
+    user_id: string | null;
     title: string;
     body: string;
     type: NotificationType;

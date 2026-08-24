@@ -34,11 +34,18 @@ app.prepare().then(() => {
   global.io = io;
 
   io.on("connection", (socket) => {
-    console.log("[Socket.IO] Admin client connected:", socket.id);
+    console.log("[Socket.IO] Client connected:", socket.id);
 
     socket.on("join-admin", () => {
       socket.join("admin-room");
       console.log("[Socket.IO] Client joined admin-room:", socket.id);
+    });
+
+    socket.on("join-user", (userId) => {
+      if (userId) {
+        socket.join(`user:${userId}`);
+        console.log(`[Socket.IO] Client joined user room (${userId}):`, socket.id);
+      }
     });
 
     socket.on("disconnect", () => {

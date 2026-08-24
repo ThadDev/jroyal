@@ -12,8 +12,10 @@ export function useNotifications() {
     const [unreadCount, setUnreadCount] = useState(0);
     const [loading, setLoading] = useState(true);
     const [audio, setAudio] = useState<HTMLAudioElement | null>(null);
-    const supabase = createClient();
     const { showToast } = useToast();
+    const supabase = createClient();
+
+    const [userState, setUserState] = useState<{ id: string; isAdmin: boolean } | null>(null);
 
     useEffect(() => {
         setAudio(new Audio(NOTIFICATION_SOUND_URL));
@@ -21,207 +23,245 @@ export function useNotifications() {
 
     const playNotificationSound = useCallback(() => {
         if (audio) {
-            audio.play().catch(e => console.log("Audio play failed:", e));
+            audio.play().catch((e) => console.log("Audio play failed:", e));
         }
     }, [audio]);
 
+    // 1. Fetch user & role once on mount
+    useEffect(() => {
+        let isMounted = true;
+        const initUser = async () => {
+            try {
+                const { data: { user } } = await supabase.auth.getUser();
+                if (!user || !isMounted) {
+                    setLoading(false);
+                    return;
+                }
+
+                const { data: profile } = await supabase
+                    .from("profiles")
+                    .select("role")
+                    .eq("id", user.id)
+                    .single();
+
+                if (isMounted) {
+                    setUserState({ id: user.id, isAdmin: profile?.role === "admin" });
+                }
+            } catch (err) {
+                console.error("Error initializing user for notifications:", err);
+                if (isMounted) setLoading(false);
+            }
+        };
+
+        initUser();
+        return () => {
+            isMounted = false;
+        };
+    }, []);
+
+    // 2. Fetch notifications once user is loaded
     const fetchNotifications = useCallback(async () => {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
+        if (!userState) return;
 
-        // Fetch user profile to check role
-        const { data: profile } = await supabase
-            .from("profiles")
-            .select("role")
-            .eq("id", user.id)
-            .single();
-
-        const isAdmin = profile?.role === "admin";
-
-        // Fetch notifications for this user (and broadcast if admin)
         const query = supabase
             .from("notifications")
             .select("*")
             .order("created_at", { ascending: false })
             .limit(50);
-            
-        if (isAdmin) {
-            query.or(`user_id.eq.${user.id},user_id.is.null`);
+
+        if (userState.isAdmin) {
+            query.or(`user_id.eq.${userState.id},user_id.is.null`);
         } else {
-            query.eq("user_id", user.id);
+            query.eq("user_id", userState.id);
         }
 
         const { data, error } = await query;
 
         if (error) {
             console.error("Error fetching notifications:", error);
-            return;
+        } else if (data) {
+            setNotifications(data as AppNotification[]);
+            setUnreadCount(data.filter((n) => !n.is_read).length);
         }
-
-        setNotifications(data as AppNotification[]);
-        setUnreadCount(data.filter((n) => !n.is_read).length);
         setLoading(false);
-    }, [supabase]);
+    }, [userState]);
 
     useEffect(() => {
         fetchNotifications();
     }, [fetchNotifications]);
 
-    // Supabase Realtime Subscription
+    // 3. Supabase Realtime Subscription
     useEffect(() => {
-        let channel: any;
+        if (!userState) return;
 
-        const setupRealtime = async () => {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) return;
+        const channel = supabase
+            .channel("notifications-live")
+            .on(
+                "postgres_changes",
+                {
+                    event: "INSERT",
+                    schema: "public",
+                    table: "notifications",
+                },
+                (payload) => {
+                    const newNotification = payload.new as AppNotification;
 
-            // Fetch user profile to check role
-            const { data: profile } = await supabase
-                .from("profiles")
-                .select("role")
-                .eq("id", user.id)
-                .single();
+                    const isForMe = newNotification.user_id === userState.id;
+                    const isBroadcastForAdmin = userState.isAdmin && !newNotification.user_id;
 
-            const isAdmin = profile?.role === "admin";
-
-            channel = supabase
-                .channel("notifications-live")
-                .on(
-                    "postgres_changes",
-                    {
-                        event: "INSERT",
-                        schema: "public",
-                        table: "notifications",
-                    },
-                    (payload) => {
-                        const newNotification = payload.new as AppNotification;
-                        
-                        // Client-side filtering for security and reliability
-                        const isForMe = newNotification.user_id === user.id;
-                        const isBroadcastForAdmin = isAdmin && !newNotification.user_id;
-
-                        if (isForMe || isBroadcastForAdmin) {
-                            setNotifications((prev) => [newNotification, ...prev]);
-                            setUnreadCount((prev) => prev + 1);
-                            showToast(newNotification.title, "info");
-                            playNotificationSound();
-                        }
+                    if (isForMe || isBroadcastForAdmin) {
+                        setNotifications((prev) => {
+                            if (prev.some((n) => n.id === newNotification.id)) return prev;
+                            return [newNotification, ...prev];
+                        });
+                        setUnreadCount((prev) => prev + 1);
+                        showToast(newNotification.title, "info");
+                        playNotificationSound();
                     }
-                )
-                .on(
-                    "postgres_changes",
-                    {
-                        event: "UPDATE",
-                        schema: "public",
-                        table: "notifications",
-                    },
-                    (payload) => {
-                        setNotifications((prev) => 
-                            prev.map((n) => n.id === payload.new.id ? { ...n, ...payload.new } : n)
-                        );
-                    }
-                )
-                .subscribe((status) => {
-                    console.log("Supabase Realtime Status:", status);
-                });
-        };
-
-        setupRealtime();
+                }
+            )
+            .on(
+                "postgres_changes",
+                {
+                    event: "UPDATE",
+                    schema: "public",
+                    table: "notifications",
+                },
+                (payload) => {
+                    setNotifications((prev) =>
+                        prev.map((n) => (n.id === payload.new.id ? { ...n, ...payload.new } : n))
+                    );
+                }
+            )
+            .subscribe((status) => {
+                console.log("Supabase Realtime Status:", status);
+            });
 
         return () => {
-            if (channel) {
-                supabase.removeChannel(channel);
-            }
+            supabase.removeChannel(channel);
         };
-    }, [supabase, showToast]);
+    }, [userState, showToast, playNotificationSound]);
 
-    // FCM Push Notification Setup
+    // 3b. Socket.IO Realtime Connection
     useEffect(() => {
-        const setupFCM = async () => {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) return;
+        if (!userState) return;
 
-            // Check if permission is already granted or ask
-            if (Notification.permission === "default") {
-                const permission = await Notification.requestPermission();
-                if (permission !== "granted") return;
-            } else if (Notification.permission === "denied") {
-                return;
-            }
-
-            const token = await requestForToken();
-            if (token) {
-                // Save token to DB
-                await fetch("/api/notifications/register-token", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ token, device: navigator.userAgent }),
+        let socket: any = null;
+        try {
+            // Dynamically import socket.io-client to ensure clean SSR compatibility
+            import("socket.io-client").then(({ io }) => {
+                socket = io("/", { path: "/socket.io", reconnection: true });
+                socket.on("connect", () => {
+                    if (userState.isAdmin) {
+                        socket.emit("join-admin");
+                    }
+                    socket.emit("join-user", userState.id);
                 });
-            }
 
-            // Listen for foreground messages
-            onMessageListener().then((payload: any) => {
-                console.log("Foreground message received:", payload);
-                
-                // 1. Play sound
-                playNotificationSound();
-
-                // 2. Show system notification manually for foreground
-                if (Notification.permission === "granted") {
-                    const { title, body } = payload.notification;
-                    const notificationOptions = {
-                        body: body,
-                        icon: "/favicon.ico",
-                        badge: "/favicon.ico",
-                        tag: "mama-onyinye-foreground",
-                        renotify: true,
-                        data: payload.data
-                    };
-                    
-                    // We can also use the service worker registration to show the notification
-                    // which is more consistent with system behavior
-                    navigator.serviceWorker.ready.then(registration => {
-                        registration.showNotification(title, notificationOptions);
+                socket.on("notification", (newNotification: AppNotification) => {
+                    setNotifications((prev) => {
+                        if (prev.some((n) => n.id === newNotification.id)) return prev;
+                        return [newNotification, ...prev];
                     });
+                    setUnreadCount((prev) => prev + 1);
+                    showToast(newNotification.title, "info");
+                    playNotificationSound();
+                });
+            });
+        } catch (err) {
+            console.warn("[Socket.IO] Client listener warning:", err);
+        }
+
+        return () => {
+            if (socket) socket.disconnect();
+        };
+    }, [userState, showToast, playNotificationSound]);
+
+    // 4. FCM Push Notification Setup
+    useEffect(() => {
+        if (!userState) return;
+
+        const setupFCM = async () => {
+            try {
+                if (Notification.permission === "default") {
+                    const permission = await Notification.requestPermission();
+                    if (permission !== "granted") return;
+                } else if (Notification.permission === "denied") {
+                    return;
                 }
-            }).catch((err) => console.error("FCM foreground listener failed:", err));
+
+                const token = await requestForToken().catch((tokenErr) => {
+                    console.warn("[FCM] Push token request notice:", tokenErr);
+                    return null;
+                });
+                if (token) {
+                    await fetch("/api/notifications/register-token", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ token, device: navigator.userAgent }),
+                    }).catch(() => {});
+                }
+
+                onMessageListener()
+                    .then((payload: any) => {
+                        console.log("Foreground message received:", payload);
+                        playNotificationSound();
+
+                        if (Notification.permission === "granted") {
+                            const { title, body } = payload.notification;
+                            const notificationOptions = {
+                                body: body,
+                                icon: "/favicon.ico",
+                                badge: "/favicon.ico",
+                                tag: "mama-onyinye-foreground",
+                                renotify: true,
+                                data: payload.data,
+                            };
+
+                            navigator.serviceWorker.ready.then((registration) => {
+                                registration.showNotification(title, notificationOptions);
+                            });
+                        }
+                    })
+                    .catch((err) => console.warn("[FCM] foreground listener failed:", err));
+            } catch (err) {
+                console.warn("[FCM] setup error:", err);
+            }
         };
 
         setupFCM();
-    }, [supabase]);
+    }, [userState, playNotificationSound]);
 
     const markAsRead = async (id: string) => {
-        const { error } = await supabase
-            .from("notifications")
-            .update({ is_read: true })
-            .eq("id", id);
-            
-        if (!error) {
-            setNotifications((prev) =>
-                prev.map((n) => (n.id === id ? { ...n, is_read: true } : n))
-            );
-            setUnreadCount((prev) => Math.max(0, prev - 1));
-        }
+        // Optimistic UI update
+        setNotifications((prev) =>
+            prev.map((n) => (n.id === id ? { ...n, is_read: true } : n))
+        );
+        setUnreadCount((prev) => Math.max(0, prev - 1));
+
+        // Persist DB update via service-role endpoint
+        await fetch("/api/notifications/mark-read", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id }),
+        }).catch((err) => console.warn("Failed to mark notification read:", err));
     };
 
     const markAllAsRead = async () => {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
+        if (!userState) return;
 
-        const unreadIds = notifications.filter(n => !n.is_read).map(n => n.id);
-        if (unreadIds.length === 0) return;
+        // Optimistic UI update
+        setNotifications((prev) =>
+            prev.map((n) => ({ ...n, is_read: true }))
+        );
+        setUnreadCount(0);
 
-        const { error } = await supabase
-            .from("notifications")
-            .update({ is_read: true })
-            .in("id", unreadIds);
-
-        if (!error) {
-            setNotifications((prev) =>
-                prev.map((n) => ({ ...n, is_read: true }))
-            );
-            setUnreadCount(0);
-        }
+        // Persist DB update via service-role endpoint
+        await fetch("/api/notifications/mark-read", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ all: true }),
+        }).catch((err) => console.warn("Failed to mark all notifications read:", err));
     };
 
     return {

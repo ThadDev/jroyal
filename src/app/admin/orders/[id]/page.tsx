@@ -1,8 +1,7 @@
-import { createServerClient } from "@supabase/ssr";
-import { cookies } from "next/headers";
+import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
-import { ArrowLeft, Clock, CheckCircle2, XCircle, Package, MapPin, Phone, Mail, User } from "lucide-react";
-import type { Order, CartItem, SelectedAddOn } from "@/types";
+import { ArrowLeft, Clock, CheckCircle2, XCircle, Package, MapPin, Phone, Mail, User, Truck } from "lucide-react";
+import type { Order, CartItem, SelectedAddOn, Driver } from "@/types";
 import OrderStatusSelect from "./OrderStatusSelect";
 import Image from "next/image";
 
@@ -10,18 +9,7 @@ export const dynamic = "force-dynamic";
 
 export default async function AdminOrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
-    const cookieStore = await cookies();
-    const supabase = createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        {
-            cookies: {
-                get(name: string) {
-                    return cookieStore.get(name)?.value;
-                },
-            },
-        }
-    );
+    const supabase = await createClient();
 
     const { data: order, error } = await supabase
         .from("orders")
@@ -40,6 +28,16 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
 
     const o = order as Order;
 
+    let assignedDriver: Driver | null = null;
+    if (o.driver_id) {
+        const { data: driverData } = await supabase
+            .from("drivers")
+            .select("*")
+            .eq("id", o.driver_id)
+            .single();
+        assignedDriver = driverData as Driver | null;
+    }
+
     return (
         <div className="p-8 max-w-4xl mx-auto">
             <Link
@@ -56,13 +54,49 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
                     <p className="text-sm text-white/50">Placed on: {new Date(o.created_at).toLocaleString()}</p>
                 </div>
                 
-                <div className="bg-white/5 border border-white/10 p-4 rounded-xl flex items-center gap-4">
-                    <div>
-                        <p className="text-xs text-white/40 mb-1">Status</p>
-                        <OrderStatusSelect orderId={o.id} customerId={o.user_id} currentStatus={o.status} />
+                <div className="flex flex-col gap-3">
+                    {/* Fulfilment status */}
+                    <div className="bg-white/5 border border-white/10 p-4 rounded-xl flex items-center gap-4">
+                        <div>
+                            <p className="text-xs text-white/40 mb-1">Fulfilment & Delivery Status</p>
+                            <OrderStatusSelect
+                                orderId={o.id}
+                                customerId={o.user_id}
+                                currentStatus={o.status}
+                                currentDriverId={o.driver_id}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Payment status badge */}
+                    <div className="bg-white/5 border border-white/10 p-4 rounded-xl space-y-2">
+                        <p className="text-xs text-white/40">Payment</p>
+                        <div className="flex items-center gap-2">
+                            <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide ${
+                                o.payment_status === "paid"
+                                    ? "bg-green-500/10 text-green-400 border border-green-500/20"
+                                    : o.payment_status === "failed"
+                                    ? "bg-red-500/10 text-red-400 border border-red-500/20"
+                                    : o.payment_status === "cancelled"
+                                    ? "bg-red-500/10 text-red-400 border border-red-500/20"
+                                    : "bg-yellow-500/10 text-yellow-400 border border-yellow-500/20"
+                            }`}>
+                                {o.payment_status === "paid" ? <CheckCircle2 size={12} /> : <Clock size={12} />}
+                                {o.payment_status ?? "unpaid"}
+                            </span>
+                            {o.payment_verified && (
+                                <span className="text-xs text-green-400/60">✓ Verified</span>
+                            )}
+                        </div>
+                        {o.payment_reference && (
+                            <p className="text-[10px] text-white/30 font-mono mt-1 truncate">
+                                Ref: {o.payment_reference}
+                            </p>
+                        )}
                     </div>
                 </div>
             </div>
+
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <div className="md:col-span-2 space-y-6">
@@ -148,8 +182,8 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
                     </div>
 
                     {/* Delivery Info */}
-                    <div className="bg-white/5 border border-white/10 rounded-xl p-6">
-                        <h2 className="text-lg font-serif text-white mb-4 border-b border-white/10 pb-2">Delivery Details</h2>
+                    <div className="bg-white/5 border border-white/10 rounded-xl p-6 space-y-4">
+                        <h2 className="text-lg font-serif text-white mb-2 border-b border-white/10 pb-2">Delivery Details</h2>
                         <div className="flex items-start gap-3">
                             <MapPin size={16} className="text-white/40 mt-0.5 flex-shrink-0" />
                             <div>
@@ -157,6 +191,36 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
                                 <p className="text-sm text-white leading-relaxed">{o.delivery_address}</p>
                             </div>
                         </div>
+
+                        {/* Assigned Driver Card */}
+                        {assignedDriver ? (
+                            <div className="pt-3 border-t border-white/5">
+                                <p className="text-xs text-gold-400 font-semibold uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                                    <Truck size={13} /> Assigned Driver
+                                </p>
+                                <div className="bg-black/30 border border-white/10 rounded-lg p-3 flex items-center justify-between">
+                                    <div>
+                                        <p className="text-sm font-semibold text-white">{assignedDriver.name}</p>
+                                        <p className="text-xs text-white/40">{assignedDriver.phone}</p>
+                                        {assignedDriver.vehicle_type && (
+                                            <p className="text-[10px] text-white/30 capitalize mt-0.5">
+                                                {assignedDriver.vehicle_type} {assignedDriver.vehicle_plate ? `(${assignedDriver.vehicle_plate})` : ""}
+                                            </p>
+                                        )}
+                                    </div>
+                                    <a
+                                        href={`tel:${assignedDriver.phone}`}
+                                        className="px-2.5 py-1 bg-green-500/10 text-green-400 border border-green-500/20 rounded text-xs font-semibold hover:bg-green-500/20"
+                                    >
+                                        Call
+                                    </a>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="pt-3 border-t border-white/5">
+                                <p className="text-xs text-white/30 italic">No driver assigned yet.</p>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>

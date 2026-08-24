@@ -14,6 +14,11 @@ export async function middleware(request: NextRequest) {
   const isDashboardRoute = pathname.startsWith("/dashboard");
   const isAuthRoute = pathname.startsWith("/auth");
 
+  // Only run Supabase session check for routes that require auth evaluation
+  if (!isDashboardRoute && !isAdminRoute && !isAuthRoute) {
+    return supabaseResponse;
+  }
+
   // Skip middleware for public auth pages
   if (isAdminRegisterPage) return supabaseResponse;
 
@@ -112,6 +117,8 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/dashboard/:path*",
+    "/admin/:path*",
+    "/auth/:path*",
   ],
 };

@@ -5,8 +5,8 @@ import type { NotificationType } from "@/types";
 // We use a service role client here to bypass RLS for server-side insertions.
 // Make sure NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are set.
 const supabaseAdmin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
+    process.env.NEXT_PUBLIC_SUPABASE_URL?.trim() || "https://placeholder.supabase.co",
+    process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() || "placeholder-service-role-key"
 );
 
 interface SendNotificationParams {
@@ -44,6 +44,39 @@ export async function sendNotification({
         if (dbError) {
             console.error("Failed to insert notification into DB:", dbError);
             return { success: false, error: dbError };
+        }
+
+        // 2. Emit Realtime event via Socket.IO if available
+        try {
+            const io = (global as any).io;
+            if (io) {
+                const eventPayload = {
+                    id: notification?.id,
+                    title,
+                    body,
+                    type,
+                    metadata,
+                    url,
+                    created_at: new Date().toISOString(),
+                };
+
+                if (userId) {
+                    // Send to specific user room
+                    io.to(`user:${userId}`).emit("notification", eventPayload);
+                } else {
+                    // Broadcast to admin room
+                    io.to("admin-room").emit("notification", eventPayload);
+                    if (type === "order_status" || metadata?.order_id) {
+                        io.to("admin-room").emit("new_order", {
+                            name: metadata?.customer_name ?? "Customer",
+                            amount: metadata?.total_amount ?? 0,
+                            id: metadata?.order_id ?? "",
+                        });
+                    }
+                }
+            }
+        } catch (socketErr) {
+            console.warn("[Socket.IO] Emit warning:", socketErr);
         }
 
         // 2. Fetch push tokens for target user(s)

@@ -14,6 +14,8 @@ import {
     Utensils,
     Layers,
     ShoppingCart,
+    Truck,
+    Bell,
     Menu,
     X
 } from "lucide-react";
@@ -24,12 +26,14 @@ import { useState, useEffect } from "react";
 const navItems = [
     { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
     { href: "/admin/orders", label: "Orders", icon: ShoppingCart },
+    { href: "/admin/drivers", label: "Drivers", icon: Truck },
     { href: "/admin/reservations", label: "Reservations", icon: CalendarDays },
     { href: "/admin/meals", label: "Meals", icon: Utensils },
     { href: "/admin/addons", label: "Add-Ons", icon: Layers },
     { href: "/admin/users", label: "Users", icon: Users },
     { href: "/admin/blog", label: "Blog Posts", icon: BookOpen },
     { href: "/admin/gallery", label: "Gallery", icon: ImageIcon },
+    { href: "/admin/test-notifications", label: "Test Notifications", icon: Bell },
 ];
 
 import NotificationDropdown from "@/components/ui/NotificationDropdown";

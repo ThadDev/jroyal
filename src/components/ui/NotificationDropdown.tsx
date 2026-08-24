@@ -129,8 +129,15 @@ export default function NotificationDropdown() {
                         </div>
                         
                         {/* Footer */}
-                        <div className="p-3 border-t border-white/10 bg-white/[0.02] text-center">
-                            <p className="text-[10px] text-white/30">Notifications from Jroyal Grills System</p>
+                        <div className="p-3 border-t border-white/10 bg-white/[0.02] flex items-center justify-between text-[11px] text-white/40">
+                            <span>Jroyal System Alerts</span>
+                            <Link
+                                href="/admin/test-notifications"
+                                onClick={() => setIsOpen(false)}
+                                className="text-gold-400 font-semibold hover:underline flex items-center gap-1"
+                            >
+                                Test Suite →
+                            </Link>
                         </div>
                     </motion.div>
                 )}

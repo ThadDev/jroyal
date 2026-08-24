@@ -1,26 +1,41 @@
-import { createServerClient } from "@supabase/ssr";
-import { cookies } from "next/headers";
+import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
-import { Eye, Clock, CheckCircle2, XCircle, Package } from "lucide-react";
-import type { Order } from "@/types";
+import { Eye, Clock, CheckCircle2, XCircle, Package, Truck, ChefHat, PackageCheck } from "lucide-react";
+import type { Order, OrderStatus } from "@/types";
+import { ORDER_STATUS_LABELS } from "@/types";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminOrdersPage() {
-    const cookieStore = await cookies();
-    const supabase = createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        {
-            cookies: {
-                get(name: string) {
-                    return cookieStore.get(name)?.value;
-                },
-            },
-        }
-    );
+function getStatusBadge(status: OrderStatus, paymentStatus: string) {
+    if (paymentStatus === "unpaid" || paymentStatus === "failed") {
+        return {
+            label: "Pending Payment",
+            color: "bg-amber-500/10 text-amber-400 border-amber-500/20",
+            icon: Clock,
+        };
+    }
+    switch (status) {
+        case "completed":
+            return { label: ORDER_STATUS_LABELS.completed, color: "bg-green-500/10 text-green-400 border-green-500/20", icon: CheckCircle2 };
+        case "out_for_delivery":
+            return { label: ORDER_STATUS_LABELS.out_for_delivery, color: "bg-blue-400/10 text-blue-300 border-blue-400/20", icon: Truck };
+        case "ready":
+            return { label: ORDER_STATUS_LABELS.ready, color: "bg-teal-500/10 text-teal-400 border-teal-500/20", icon: PackageCheck };
+        case "preparing":
+            return { label: ORDER_STATUS_LABELS.preparing, color: "bg-purple-500/10 text-purple-400 border-purple-500/20", icon: ChefHat };
+        case "processing":
+            return { label: ORDER_STATUS_LABELS.processing, color: "bg-blue-500/10 text-blue-400 border-blue-500/20", icon: Package };
+        case "cancelled":
+            return { label: ORDER_STATUS_LABELS.cancelled, color: "bg-red-500/10 text-red-400 border-red-500/20", icon: XCircle };
+        default:
+            return { label: ORDER_STATUS_LABELS.pending, color: "bg-gold-500/10 text-gold-400 border-gold-500/20", icon: Clock };
+    }
+}
 
-    const { data: orders, error } = await supabase
+export default async function AdminOrdersPage() {
+    const supabase = await createClient();
+
+    const { data: orders } = await supabase
         .from("orders")
         .select("*")
         .order("created_at", { ascending: false });
@@ -30,7 +45,7 @@ export default async function AdminOrdersPage() {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
                 <div>
                     <h1 className="text-2xl md:text-3xl font-serif text-white font-bold mb-1 md:mb-2">Orders</h1>
-                    <p className="text-sm text-white/50">Manage customer orders and deliveries.</p>
+                    <p className="text-sm text-white/50">Manage customer orders, fulfilment, and driver assignments.</p>
                 </div>
             </div>
 
@@ -55,45 +70,43 @@ export default async function AdminOrdersPage() {
                                 </td>
                             </tr>
                         ) : (
-                            orders.map((order: Order) => (
-                                <tr key={order.id} className="border-b border-white/5 hover:bg-white/[0.02] transition-colors">
-                                    <td className="py-4 px-6 text-white/70 font-mono text-xs">
-                                        {order.id.slice(0, 8)}...
-                                    </td>
-                                    <td className="py-4 px-6 text-white/70">
-                                        {new Date(order.created_at).toLocaleDateString()}
-                                    </td>
-                                    <td className="py-4 px-6">
-                                        <div className="text-white font-medium">{order.customer_name}</div>
-                                        <div className="text-xs text-white/40">{order.customer_phone}</div>
-                                    </td>
-                                    <td className="py-4 px-6 text-gold-400 font-semibold">
-                                        ₦{order.total_amount.toLocaleString("en-NG")}
-                                    </td>
-                                    <td className="py-4 px-6">
-                                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold tracking-wide uppercase ${
-                                            order.status === "completed" ? "bg-green-500/10 text-green-400 border border-green-500/20" :
-                                            order.status === "processing" ? "bg-blue-500/10 text-blue-400 border border-blue-500/20" :
-                                            order.status === "cancelled" ? "bg-red-500/10 text-red-400 border border-red-500/20" :
-                                            "bg-gold-500/10 text-gold-400 border border-gold-500/20"
-                                        }`}>
-                                            {order.status === "completed" ? <CheckCircle2 size={12} /> :
-                                             order.status === "processing" ? <Package size={12} /> :
-                                             order.status === "cancelled" ? <XCircle size={12} /> :
-                                             <Clock size={12} />}
-                                            {order.status}
-                                        </span>
-                                    </td>
-                                    <td className="py-4 px-6 text-right">
-                                        <Link
-                                            href={`/admin/orders/${order.id}`}
-                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-md text-white/70 hover:text-white transition-colors text-xs"
-                                        >
-                                            <Eye size={14} /> View
-                                        </Link>
-                                    </td>
-                                </tr>
-                            ))
+                            orders.map((order: Order) => {
+                                const badge = getStatusBadge(order.status, order.payment_status);
+                                const Icon = badge.icon;
+                                return (
+                                    <tr key={order.id} className="border-b border-white/5 hover:bg-white/[0.02] transition-colors">
+                                        <td className="py-4 px-6 text-white/70 font-mono text-xs">
+                                            #{order.id.slice(0, 8).toUpperCase()}
+                                        </td>
+                                        <td className="py-4 px-6 text-white/70 text-xs">
+                                            {new Date(order.created_at).toLocaleString("en-NG", {
+                                                day: "numeric", month: "short", hour: "numeric", minute: "2-digit"
+                                            })}
+                                        </td>
+                                        <td className="py-4 px-6">
+                                            <div className="text-white font-medium text-sm">{order.customer_name}</div>
+                                            <div className="text-xs text-white/40">{order.customer_phone}</div>
+                                        </td>
+                                        <td className="py-4 px-6 text-gold-400 font-semibold text-sm">
+                                            ₦{order.total_amount.toLocaleString("en-NG")}
+                                        </td>
+                                        <td className="py-4 px-6">
+                                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold tracking-wide border ${badge.color}`}>
+                                                <Icon size={12} />
+                                                {badge.label}
+                                            </span>
+                                        </td>
+                                        <td className="py-4 px-6 text-right">
+                                            <Link
+                                                href={`/admin/orders/${order.id}`}
+                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-md text-white/70 hover:text-white transition-colors text-xs"
+                                            >
+                                                <Eye size={14} /> View
+                                            </Link>
+                                        </td>
+                                    </tr>
+                                );
+                            })
                         )}
                     </tbody>
                 </table>
@@ -106,47 +119,43 @@ export default async function AdminOrdersPage() {
                         No orders found.
                     </div>
                 ) : (
-                    orders.map((order: Order) => (
-                        <div key={order.id} className="bg-white/5 border border-white/10 rounded-xl p-5 space-y-4">
-                            <div className="flex items-start justify-between">
-                                <div>
-                                    <p className="text-[10px] text-white/30 uppercase tracking-widest mb-1">Order ID: {order.id.slice(0, 8)}</p>
-                                    <h3 className="text-white font-medium">{order.customer_name}</h3>
-                                    <p className="text-xs text-white/40">{order.customer_phone}</p>
+                    orders.map((order: Order) => {
+                        const badge = getStatusBadge(order.status, order.payment_status);
+                        const Icon = badge.icon;
+                        return (
+                            <div key={order.id} className="bg-white/5 border border-white/10 rounded-xl p-5 space-y-4">
+                                <div className="flex items-start justify-between">
+                                    <div>
+                                        <p className="text-[10px] text-white/30 uppercase tracking-widest mb-1 font-mono">#{order.id.slice(0, 8).toUpperCase()}</p>
+                                        <h3 className="text-white font-medium">{order.customer_name}</h3>
+                                        <p className="text-xs text-white/40">{order.customer_phone}</p>
+                                    </div>
+                                    <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wide uppercase border ${badge.color}`}>
+                                        <Icon size={10} />
+                                        {badge.label}
+                                    </span>
                                 </div>
-                                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wide uppercase ${
-                                    order.status === "completed" ? "bg-green-500/10 text-green-400 border border-green-500/20" :
-                                    order.status === "processing" ? "bg-blue-500/10 text-blue-400 border border-blue-500/20" :
-                                    order.status === "cancelled" ? "bg-red-500/10 text-red-400 border border-red-500/20" :
-                                    "bg-gold-500/10 text-gold-400 border border-gold-500/20"
-                                }`}>
-                                    {order.status === "completed" ? <CheckCircle2 size={10} /> :
-                                     order.status === "processing" ? <Package size={10} /> :
-                                     order.status === "cancelled" ? <XCircle size={10} /> :
-                                     <Clock size={10} />}
-                                    {order.status}
-                                </span>
-                            </div>
-                            
-                            <div className="flex items-center justify-between pt-2 border-t border-white/5">
-                                <div>
-                                    <p className="text-[10px] text-white/30 uppercase tracking-widest mb-0.5">Date</p>
-                                    <p className="text-white text-sm">{new Date(order.created_at).toLocaleDateString()}</p>
+                                
+                                <div className="flex items-center justify-between pt-2 border-t border-white/5">
+                                    <div>
+                                        <p className="text-[10px] text-white/30 uppercase tracking-widest mb-0.5">Date</p>
+                                        <p className="text-white text-xs">{new Date(order.created_at).toLocaleDateString("en-NG")}</p>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-[10px] text-white/30 uppercase tracking-widest mb-0.5">Total</p>
+                                        <p className="text-gold-400 font-bold">₦{order.total_amount.toLocaleString("en-NG")}</p>
+                                    </div>
                                 </div>
-                                <div className="text-right">
-                                    <p className="text-[10px] text-white/30 uppercase tracking-widest mb-0.5">Total</p>
-                                    <p className="text-gold-400 font-bold">₦{order.total_amount.toLocaleString("en-NG")}</p>
-                                </div>
-                            </div>
 
-                            <Link
-                                href={`/admin/orders/${order.id}`}
-                                className="flex items-center justify-center gap-2 w-full py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-white font-medium transition-all text-sm"
-                            >
-                                <Eye size={16} /> View Full Details
-                            </Link>
-                        </div>
-                    ))
+                                <Link
+                                    href={`/admin/orders/${order.id}`}
+                                    className="flex items-center justify-center gap-2 w-full py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-white font-medium transition-all text-sm"
+                                >
+                                    <Eye size={16} /> View Details & Driver Assignment
+                                </Link>
+                            </div>
+                        );
+                    })
                 )}
             </div>
         </div>
