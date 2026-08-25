@@ -7,10 +7,15 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
     title: "Jroyal Grills Admin Dashboard",
     manifest: "/manifest.json",
+    icons: {
+        icon: "/icons/jroyal.png",
+        shortcut: "/icons/jroyal.png",
+        apple: "/icons/apple-touch-icon.png",
+    },
     appleWebApp: {
         capable: true,
         statusBarStyle: "black-translucent",
-        title: "MO Admin",
+        title: "Jroyal Admin",
     },
 };
 
