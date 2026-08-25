@@ -94,30 +94,33 @@ export function useNotifications() {
     useEffect(() => {
         if (!userState) return;
 
+        // Use a unique channel name per user to avoid cross-user conflicts.
+        // For admins, also subscribe to the broadcast channel (user_id IS NULL rows).
+        const channelName = `notifications-user-${userState.id}`;
+
+        // Build filter: admins watch their own rows; regular users watch their own rows.
+        // For admin broadcast rows (user_id IS NULL), we fall back to a second channel.
+        const userFilter = `user_id=eq.${userState.id}`;
+
         const channel = supabase
-            .channel("notifications-live")
+            .channel(channelName)
             .on(
                 "postgres_changes",
                 {
                     event: "INSERT",
                     schema: "public",
                     table: "notifications",
+                    filter: userFilter,
                 },
                 (payload) => {
                     const newNotification = payload.new as AppNotification;
-
-                    const isForMe = newNotification.user_id === userState.id;
-                    const isBroadcastForAdmin = userState.isAdmin && !newNotification.user_id;
-
-                    if (isForMe || isBroadcastForAdmin) {
-                        setNotifications((prev) => {
-                            if (prev.some((n) => n.id === newNotification.id)) return prev;
-                            return [newNotification, ...prev];
-                        });
-                        setUnreadCount((prev) => prev + 1);
-                        showToast(newNotification.title, "info");
-                        playNotificationSound();
-                    }
+                    setNotifications((prev) => {
+                        if (prev.some((n) => n.id === newNotification.id)) return prev;
+                        return [newNotification, ...prev];
+                    });
+                    setUnreadCount((prev) => prev + 1);
+                    showToast(newNotification.title, "info");
+                    playNotificationSound();
                 }
             )
             .on(
@@ -126,6 +129,7 @@ export function useNotifications() {
                     event: "UPDATE",
                     schema: "public",
                     table: "notifications",
+                    filter: userFilter,
                 },
                 (payload) => {
                     setNotifications((prev) =>
@@ -134,11 +138,41 @@ export function useNotifications() {
                 }
             )
             .subscribe((status) => {
-                console.log("Supabase Realtime Status:", status);
+                console.log(`[Supabase Realtime] ${channelName} status:`, status);
             });
+
+        // Admins also subscribe to broadcast (user_id IS NULL) notifications
+        let adminChannel: ReturnType<typeof supabase.channel> | null = null;
+        if (userState.isAdmin) {
+            adminChannel = supabase
+                .channel("notifications-admin-broadcast")
+                .on(
+                    "postgres_changes",
+                    {
+                        event: "INSERT",
+                        schema: "public",
+                        table: "notifications",
+                        filter: "user_id=is.null",
+                    },
+                    (payload) => {
+                        const newNotification = payload.new as AppNotification;
+                        setNotifications((prev) => {
+                            if (prev.some((n) => n.id === newNotification.id)) return prev;
+                            return [newNotification, ...prev];
+                        });
+                        setUnreadCount((prev) => prev + 1);
+                        showToast(newNotification.title, "info");
+                        playNotificationSound();
+                    }
+                )
+                .subscribe((status) => {
+                    console.log("[Supabase Realtime] admin-broadcast status:", status);
+                });
+        }
 
         return () => {
             supabase.removeChannel(channel);
+            if (adminChannel) supabase.removeChannel(adminChannel);
         };
     }, [userState, showToast, playNotificationSound]);
 
@@ -147,15 +181,27 @@ export function useNotifications() {
         if (!userState) return;
 
         let socket: any = null;
-        try {
-            // Dynamically import socket.io-client to ensure clean SSR compatibility
-            import("socket.io-client").then(({ io }) => {
-                socket = io("/", { path: "/socket.io", reconnection: true });
+        // Dynamically import socket.io-client to ensure clean SSR compatibility
+        import("socket.io-client")
+            .then(({ io }) => {
+                socket = io(process.env.NEXT_PUBLIC_SITE_URL || "/", {
+                    path: "/socket.io",
+                    reconnection: true,
+                    reconnectionAttempts: 5,
+                    reconnectionDelay: 1000,
+                    transports: ["websocket", "polling"],
+                });
+
                 socket.on("connect", () => {
+                    console.log("[Socket.IO] Connected:", socket.id);
                     if (userState.isAdmin) {
                         socket.emit("join-admin");
                     }
                     socket.emit("join-user", userState.id);
+                });
+
+                socket.on("connect_error", (err: Error) => {
+                    console.warn("[Socket.IO] Connection error (custom server may not be running):", err.message);
                 });
 
                 socket.on("notification", (newNotification: AppNotification) => {
@@ -167,10 +213,10 @@ export function useNotifications() {
                     showToast(newNotification.title, "info");
                     playNotificationSound();
                 });
+            })
+            .catch((err) => {
+                console.warn("[Socket.IO] Client import warning:", err);
             });
-        } catch (err) {
-            console.warn("[Socket.IO] Client listener warning:", err);
-        }
 
         return () => {
             if (socket) socket.disconnect();
