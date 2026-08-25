@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { requestForToken, onMessageListener } from "@/lib/firebase/client";
 import type { AppNotification } from "@/types";
@@ -11,21 +11,121 @@ export function useNotifications() {
     const [notifications, setNotifications] = useState<AppNotification[]>([]);
     const [unreadCount, setUnreadCount] = useState(0);
     const [loading, setLoading] = useState(true);
-    const [audio, setAudio] = useState<HTMLAudioElement | null>(null);
+    const audioRef = useRef<HTMLAudioElement | null>(null);
+    const audioUnlockedRef = useRef<boolean>(false);
     const { showToast } = useToast();
     const supabase = createClient();
 
     const [userState, setUserState] = useState<{ id: string; isAdmin: boolean } | null>(null);
 
+    // Audio setup + Browser Autoplay Unlocker
     useEffect(() => {
-        setAudio(new Audio(NOTIFICATION_SOUND_URL));
+        const audio = new Audio(NOTIFICATION_SOUND_URL);
+        audio.preload = "auto";
+        audioRef.current = audio;
+
+        // Unlock audio on first user touch/click (required by mobile iOS/Android autoplay policy)
+        const unlockAudio = () => {
+            if (audioUnlockedRef.current || !audioRef.current) return;
+            audioRef.current.play().then(() => {
+                audioRef.current?.pause();
+                if (audioRef.current) audioRef.current.currentTime = 0;
+                audioUnlockedRef.current = true;
+                console.log("[Audio] System notification sound unlocked successfully");
+            }).catch(() => {});
+
+            window.removeEventListener("touchstart", unlockAudio);
+            window.removeEventListener("click", unlockAudio);
+        };
+
+        window.addEventListener("touchstart", unlockAudio, { once: true });
+        window.addEventListener("click", unlockAudio, { once: true });
+
+        return () => {
+            window.removeEventListener("touchstart", unlockAudio);
+            window.removeEventListener("click", unlockAudio);
+        };
     }, []);
 
+    // Reliable dual-tone audio chime (uses Web Audio API fallback if HTML5 Audio is blocked)
     const playNotificationSound = useCallback(() => {
-        if (audio) {
-            audio.play().catch((e) => console.log("Audio play failed:", e));
+        try {
+            if (audioRef.current) {
+                audioRef.current.currentTime = 0;
+                const playPromise = audioRef.current.play();
+                if (playPromise !== undefined) {
+                    playPromise.catch(() => {
+                        // Fallback to Web Audio API Synth Chime if HTML5 Audio play is blocked by autoplay
+                        playWebAudioChime();
+                    });
+                }
+            } else {
+                playWebAudioChime();
+            }
+        } catch {
+            playWebAudioChime();
         }
-    }, [audio]);
+    }, []);
+
+    // Web Audio API Synthesizer Chime (Works 100% reliably without external MP3 dependencies)
+    const playWebAudioChime = () => {
+        try {
+            const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+            if (!AudioCtx) return;
+            const ctx = new AudioCtx();
+
+            const now = ctx.currentTime;
+            const osc1 = ctx.createOscillator();
+            const osc2 = ctx.createOscillator();
+            const gain = ctx.createGain();
+
+            osc1.type = "sine";
+            osc2.type = "sine";
+
+            // Dual tone chime: E5 (659.25 Hz) then A5 (880 Hz)
+            osc1.frequency.setValueAtTime(659.25, now);
+            osc1.frequency.setValueAtTime(880, now + 0.12);
+
+            osc2.frequency.setValueAtTime(1318.5, now);
+            osc2.frequency.setValueAtTime(1760, now + 0.12);
+
+            gain.gain.setValueAtTime(0.3, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+
+            osc1.connect(gain);
+            osc2.connect(gain);
+            gain.connect(ctx.destination);
+
+            osc1.start(now);
+            osc2.start(now);
+            osc1.stop(now + 0.5);
+            osc2.stop(now + 0.5);
+        } catch {
+            /* ignore audio failures */
+        }
+    };
+
+    // Trigger Mobile System Status Bar Notification
+    const triggerSystemMobileNotification = useCallback((title: string, body: string, url = "/admin") => {
+        try {
+            if (!("serviceWorker" in navigator) || !("Notification" in window)) return;
+            if (Notification.permission !== "granted") return;
+
+            navigator.serviceWorker.ready.then((registration) => {
+                registration.showNotification(title, {
+                    body: body,
+                    icon: "/icons/jroyal.png",
+                    badge: "/icons/icon-192x192.png",
+                    vibrate: [200, 100, 200, 100, 200],
+                    tag: `jroyal-notif-${Date.now()}`,
+                    renotify: true,
+                    data: { url },
+                } as NotificationOptions);
+            }).catch((err) => console.warn("[System Notification] SW trigger failed:", err));
+        } catch (err) {
+            console.warn("[System Notification] Error:", err);
+        }
+    }, []);
 
     // 1. Fetch user & role once on mount
     useEffect(() => {
@@ -95,7 +195,7 @@ export function useNotifications() {
         fetchNotifications();
     }, [fetchNotifications]);
 
-    // Fail-safe A: 10-second silent background polling & Tab Visibility Sync
+    // 10-second silent background polling & Tab Visibility Sync
     useEffect(() => {
         if (!userState) return;
 
@@ -119,14 +219,13 @@ export function useNotifications() {
         };
     }, [userState, fetchNotifications]);
 
-    // 3. Supabase Realtime Subscription (Bulletproof without invalid filter strings)
+    // 3. Supabase Realtime Subscription
     useEffect(() => {
         if (!userState) return;
 
         const channelName = `notifications-realtime-${userState.id}`;
 
         const handleNotificationPayload = (newNotification: AppNotification) => {
-            // Check if this notification belongs to the active user or is an admin broadcast
             const isForMe =
                 newNotification.user_id === userState.id ||
                 (!newNotification.user_id && userState.isAdmin);
@@ -139,6 +238,11 @@ export function useNotifications() {
                 setUnreadCount((prev) => prev + 1);
                 showToast(newNotification.title, "info");
                 playNotificationSound();
+                triggerSystemMobileNotification(
+                    newNotification.title,
+                    newNotification.body,
+                    newNotification.metadata?.url || "/admin"
+                );
             }
         };
 
@@ -168,16 +272,12 @@ export function useNotifications() {
                     );
                 }
             )
-            .subscribe((status) => {
-                if (status === "SUBSCRIBED") {
-                    console.log(`[Supabase Realtime] Connected to notifications channel`);
-                }
-            });
+            .subscribe();
 
         return () => {
             supabase.removeChannel(channel);
         };
-    }, [userState, showToast, playNotificationSound]);
+    }, [userState, showToast, playNotificationSound, triggerSystemMobileNotification]);
 
     // 3b. Socket.IO Realtime Connection with Auto-Room Re-join
     useEffect(() => {
@@ -201,13 +301,8 @@ export function useNotifications() {
                     socket.emit("join-user", userState.id);
                 };
 
-                socket.on("connect", () => {
-                    joinRooms();
-                });
-
-                socket.on("reconnect", () => {
-                    joinRooms();
-                });
+                socket.on("connect", joinRooms);
+                socket.on("reconnect", joinRooms);
 
                 socket.on("notification", (newNotification: AppNotification) => {
                     setNotifications((prev) => {
@@ -217,6 +312,11 @@ export function useNotifications() {
                     setUnreadCount((prev) => prev + 1);
                     showToast(newNotification.title, "info");
                     playNotificationSound();
+                    triggerSystemMobileNotification(
+                        newNotification.title,
+                        newNotification.body,
+                        newNotification.metadata?.url || "/admin"
+                    );
                 });
             })
             .catch((err) => {
@@ -226,7 +326,7 @@ export function useNotifications() {
         return () => {
             if (socket) socket.disconnect();
         };
-    }, [userState, showToast, playNotificationSound]);
+    }, [userState, showToast, playNotificationSound, triggerSystemMobileNotification]);
 
     // 4. FCM Push Notification Setup
     useEffect(() => {
@@ -257,21 +357,9 @@ export function useNotifications() {
                     .then((payload: any) => {
                         playNotificationSound();
 
-                        if (Notification.permission === "granted") {
-                            const { title, body } = payload.notification;
-                            const notificationOptions = {
-                                body: body,
-                                icon: "/favicon.ico",
-                                badge: "/favicon.ico",
-                                tag: "mama-onyinye-foreground",
-                                renotify: true,
-                                data: payload.data,
-                            };
-
-                            navigator.serviceWorker.ready.then((registration) => {
-                                registration.showNotification(title, notificationOptions);
-                            });
-                        }
+                        const title = payload.notification?.title || payload.data?.title || "Jroyal Alert";
+                        const body = payload.notification?.body || payload.data?.body || "";
+                        triggerSystemMobileNotification(title, body, payload.data?.url || "/admin");
                     })
                     .catch((err) => console.warn("[FCM] foreground listener failed:", err));
             } catch (err) {
@@ -280,7 +368,7 @@ export function useNotifications() {
         };
 
         setupFCM();
-    }, [userState, playNotificationSound]);
+    }, [userState, playNotificationSound, triggerSystemMobileNotification]);
 
     const markAsRead = async (id: string) => {
         setNotifications((prev) =>
