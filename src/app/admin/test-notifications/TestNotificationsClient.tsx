@@ -258,22 +258,20 @@ export default function TestNotificationsClient() {
                                 <button
                                     type="button"
                                     onClick={() => setCustomTarget("admin")}
-                                    className={`py-2 px-3 rounded-lg border text-xs font-semibold transition-all ${
-                                        customTarget === "admin"
+                                    className={`py-2 px-3 rounded-lg border text-xs font-semibold transition-all ${customTarget === "admin"
                                             ? "bg-gold-500/20 text-gold-400 border-gold-500/40"
                                             : "bg-obsidian border-white/10 text-white/40 hover:text-white"
-                                    }`}
+                                        }`}
                                 >
                                     Admin Broadcast
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => setCustomTarget("self")}
-                                    className={`py-2 px-3 rounded-lg border text-xs font-semibold transition-all ${
-                                        customTarget === "self"
+                                    className={`py-2 px-3 rounded-lg border text-xs font-semibold transition-all ${customTarget === "self"
                                             ? "bg-gold-500/20 text-gold-400 border-gold-500/40"
                                             : "bg-obsidian border-white/10 text-white/40 hover:text-white"
-                                    }`}
+                                        }`}
                                 >
                                     My Account (Self)
                                 </button>

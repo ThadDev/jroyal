@@ -5,6 +5,7 @@ import { ToastProvider } from "@/context/ToastContext";
 import { BranchProvider } from "@/context/BranchContext";
 import WhatsAppButton from "@/components/ui/WhatsAppButton";
 import LocationSelector from "@/components/ui/LocationSelector";
+import BranchSwitcherFloatingButton from "@/components/ui/BranchSwitcherFloatingButton";
 import NextTopLoader from "nextjs-toploader";
 
 // ── next/font: fonts are inlined (no external round-trip), font-display:swap ──
@@ -171,11 +172,12 @@ export default function RootLayout({
                     shadow="0 0 10px #D4A832,0 0 5px #D4A832"
                 />
                 <BranchProvider>
-                    {/* Location selector — shown once on first visit */}
+                    {/* Location selector — shown once on first visit or when reset */}
                     <LocationSelector />
                     <ToastProvider>
                         {children}
                         <WhatsAppButton />
+                        <BranchSwitcherFloatingButton />
                     </ToastProvider>
                 </BranchProvider>
             </body>
