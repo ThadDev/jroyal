@@ -59,48 +59,88 @@ export function useNotifications() {
         };
     }, []);
 
-    // 2. Fetch notifications once user is loaded
+    // 2. Fetch notifications from DB
     const fetchNotifications = useCallback(async () => {
         if (!userState) return;
 
-        const query = supabase
-            .from("notifications")
-            .select("*")
-            .order("created_at", { ascending: false })
-            .limit(50);
+        try {
+            const query = supabase
+                .from("notifications")
+                .select("*")
+                .order("created_at", { ascending: false })
+                .limit(50);
 
-        if (userState.isAdmin) {
-            query.or(`user_id.eq.${userState.id},user_id.is.null`);
-        } else {
-            query.eq("user_id", userState.id);
+            if (userState.isAdmin) {
+                query.or(`user_id.eq.${userState.id},user_id.is.null`);
+            } else {
+                query.eq("user_id", userState.id);
+            }
+
+            const { data, error } = await query;
+
+            if (error) {
+                console.error("Error fetching notifications:", error);
+            } else if (data) {
+                setNotifications(data as AppNotification[]);
+                setUnreadCount(data.filter((n) => !n.is_read).length);
+            }
+        } catch (err) {
+            console.error("Failed fetching notifications:", err);
+        } finally {
+            setLoading(false);
         }
-
-        const { data, error } = await query;
-
-        if (error) {
-            console.error("Error fetching notifications:", error);
-        } else if (data) {
-            setNotifications(data as AppNotification[]);
-            setUnreadCount(data.filter((n) => !n.is_read).length);
-        }
-        setLoading(false);
     }, [userState]);
 
     useEffect(() => {
         fetchNotifications();
     }, [fetchNotifications]);
 
-    // 3. Supabase Realtime Subscription
+    // Fail-safe A: 10-second silent background polling & Tab Visibility Sync
     useEffect(() => {
         if (!userState) return;
 
-        // Use a unique channel name per user to avoid cross-user conflicts.
-        // For admins, also subscribe to the broadcast channel (user_id IS NULL rows).
-        const channelName = `notifications-user-${userState.id}`;
+        const pollInterval = setInterval(() => {
+            fetchNotifications();
+        }, 10000);
 
-        // Build filter: admins watch their own rows; regular users watch their own rows.
-        // For admin broadcast rows (user_id IS NULL), we fall back to a second channel.
-        const userFilter = `user_id=eq.${userState.id}`;
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === "visible") {
+                fetchNotifications();
+            }
+        };
+
+        window.addEventListener("focus", fetchNotifications);
+        document.addEventListener("visibilitychange", handleVisibilityChange);
+
+        return () => {
+            clearInterval(pollInterval);
+            window.removeEventListener("focus", fetchNotifications);
+            document.removeEventListener("visibilitychange", handleVisibilityChange);
+        };
+    }, [userState, fetchNotifications]);
+
+    // 3. Supabase Realtime Subscription (Bulletproof without invalid filter strings)
+    useEffect(() => {
+        if (!userState) return;
+
+        const channelName = `notifications-realtime-${userState.id}`;
+
+        const handleNotificationPayload = (newNotification: AppNotification) => {
+            // Check if this notification belongs to the active user or is an admin broadcast
+            const isForMe =
+                newNotification.user_id === userState.id ||
+                (!newNotification.user_id && userState.isAdmin);
+
+            if (isForMe) {
+                setNotifications((prev) => {
+                    if (prev.some((n) => n.id === newNotification.id)) return prev;
+                    return [newNotification, ...prev];
+                });
+                setUnreadCount((prev) => prev + 1);
+                showToast(newNotification.title, "info");
+                playNotificationSound();
+            }
+        };
 
         const channel = supabase
             .channel(channelName)
@@ -110,17 +150,9 @@ export function useNotifications() {
                     event: "INSERT",
                     schema: "public",
                     table: "notifications",
-                    filter: userFilter,
                 },
                 (payload) => {
-                    const newNotification = payload.new as AppNotification;
-                    setNotifications((prev) => {
-                        if (prev.some((n) => n.id === newNotification.id)) return prev;
-                        return [newNotification, ...prev];
-                    });
-                    setUnreadCount((prev) => prev + 1);
-                    showToast(newNotification.title, "info");
-                    playNotificationSound();
+                    handleNotificationPayload(payload.new as AppNotification);
                 }
             )
             .on(
@@ -129,7 +161,6 @@ export function useNotifications() {
                     event: "UPDATE",
                     schema: "public",
                     table: "notifications",
-                    filter: userFilter,
                 },
                 (payload) => {
                     setNotifications((prev) =>
@@ -138,70 +169,44 @@ export function useNotifications() {
                 }
             )
             .subscribe((status) => {
-                console.log(`[Supabase Realtime] ${channelName} status:`, status);
+                if (status === "SUBSCRIBED") {
+                    console.log(`[Supabase Realtime] Connected to notifications channel`);
+                }
             });
-
-        // Admins also subscribe to broadcast (user_id IS NULL) notifications
-        let adminChannel: ReturnType<typeof supabase.channel> | null = null;
-        if (userState.isAdmin) {
-            adminChannel = supabase
-                .channel("notifications-admin-broadcast")
-                .on(
-                    "postgres_changes",
-                    {
-                        event: "INSERT",
-                        schema: "public",
-                        table: "notifications",
-                        filter: "user_id=is.null",
-                    },
-                    (payload) => {
-                        const newNotification = payload.new as AppNotification;
-                        setNotifications((prev) => {
-                            if (prev.some((n) => n.id === newNotification.id)) return prev;
-                            return [newNotification, ...prev];
-                        });
-                        setUnreadCount((prev) => prev + 1);
-                        showToast(newNotification.title, "info");
-                        playNotificationSound();
-                    }
-                )
-                .subscribe((status) => {
-                    console.log("[Supabase Realtime] admin-broadcast status:", status);
-                });
-        }
 
         return () => {
             supabase.removeChannel(channel);
-            if (adminChannel) supabase.removeChannel(adminChannel);
         };
     }, [userState, showToast, playNotificationSound]);
 
-    // 3b. Socket.IO Realtime Connection
+    // 3b. Socket.IO Realtime Connection with Auto-Room Re-join
     useEffect(() => {
         if (!userState) return;
 
         let socket: any = null;
-        // Dynamically import socket.io-client to ensure clean SSR compatibility
         import("socket.io-client")
             .then(({ io }) => {
                 socket = io(process.env.NEXT_PUBLIC_SITE_URL || "/", {
                     path: "/socket.io",
                     reconnection: true,
-                    reconnectionAttempts: 5,
+                    reconnectionAttempts: 10,
                     reconnectionDelay: 1000,
                     transports: ["websocket", "polling"],
                 });
 
-                socket.on("connect", () => {
-                    console.log("[Socket.IO] Connected:", socket.id);
+                const joinRooms = () => {
                     if (userState.isAdmin) {
                         socket.emit("join-admin");
                     }
                     socket.emit("join-user", userState.id);
+                };
+
+                socket.on("connect", () => {
+                    joinRooms();
                 });
 
-                socket.on("connect_error", (err: Error) => {
-                    console.warn("[Socket.IO] Connection error (custom server may not be running):", err.message);
+                socket.on("reconnect", () => {
+                    joinRooms();
                 });
 
                 socket.on("notification", (newNotification: AppNotification) => {
@@ -215,7 +220,7 @@ export function useNotifications() {
                 });
             })
             .catch((err) => {
-                console.warn("[Socket.IO] Client import warning:", err);
+                console.warn("[Socket.IO] Client import notice:", err);
             });
 
         return () => {
@@ -250,7 +255,6 @@ export function useNotifications() {
 
                 onMessageListener()
                     .then((payload: any) => {
-                        console.log("Foreground message received:", payload);
                         playNotificationSound();
 
                         if (Notification.permission === "granted") {
@@ -279,13 +283,11 @@ export function useNotifications() {
     }, [userState, playNotificationSound]);
 
     const markAsRead = async (id: string) => {
-        // Optimistic UI update
         setNotifications((prev) =>
             prev.map((n) => (n.id === id ? { ...n, is_read: true } : n))
         );
         setUnreadCount((prev) => Math.max(0, prev - 1));
 
-        // Persist DB update via service-role endpoint
         await fetch("/api/notifications/mark-read", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -296,13 +298,11 @@ export function useNotifications() {
     const markAllAsRead = async () => {
         if (!userState) return;
 
-        // Optimistic UI update
         setNotifications((prev) =>
             prev.map((n) => ({ ...n, is_read: true }))
         );
         setUnreadCount(0);
 
-        // Persist DB update via service-role endpoint
         await fetch("/api/notifications/mark-read", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
