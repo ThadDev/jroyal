@@ -22,17 +22,15 @@ export const dynamic = "force-dynamic";
 function getStatusConfig(status: OrderStatus, isUnpaid: boolean) {
     if (isUnpaid) return { icon: Clock, color: "bg-amber-500/10 text-amber-400 border-amber-500/20", label: "Pending Payment" };
     switch (status) {
-        case "completed":    return { icon: CheckCircle2, color: "bg-green-500/10 text-green-400 border-green-500/20", label: LABELS.completed };
         case "out_for_delivery": return { icon: Truck, color: "bg-blue-400/10 text-blue-300 border-blue-400/20", label: LABELS.out_for_delivery };
         case "ready":        return { icon: PackageCheck, color: "bg-teal-500/10 text-teal-400 border-teal-500/20", label: LABELS.ready };
-        case "preparing":    return { icon: ChefHat, color: "bg-purple-500/10 text-purple-400 border-purple-500/20", label: LABELS.preparing };
-        case "processing":   return { icon: Package, color: "bg-blue-500/10 text-blue-400 border-blue-500/20", label: LABELS.processing };
+        case "processing":   return { icon: ChefHat, color: "bg-purple-500/10 text-purple-400 border-purple-500/20", label: LABELS.processing };
         case "cancelled":    return { icon: XCircle, color: "bg-red-500/10 text-red-400 border-red-500/20", label: LABELS.cancelled };
         default:             return { icon: Clock, color: "bg-amber-500/10 text-amber-400 border-amber-500/20", label: LABELS.pending };
     }
 }
 
-const TRACKABLE_STATUSES: OrderStatus[] = ["processing", "preparing", "ready", "out_for_delivery"];
+const TRACKABLE_STATUSES: OrderStatus[] = ["processing", "ready", "out_for_delivery"];
 
 export default async function UserOrdersPage() {
     const supabase = await createClient();
@@ -126,14 +124,14 @@ export default async function UserOrdersPage() {
                                                 >
                                                     <MapPin size={12} /> Track
                                                 </Link>
-                                            ) : order.status === "completed" ? (
+                                            ) : (
                                                 <Link
                                                     href={`/dashboard/orders/${order.id}/track`}
                                                     className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/5 hover:bg-white/10 text-white/50 border border-white/10 rounded-lg font-semibold text-xs transition-all"
                                                 >
                                                     View <ArrowRight size={12} />
                                                 </Link>
-                                            ) : null}
+                                            )}
                                         </div>
                                     </div>
 

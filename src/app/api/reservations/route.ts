@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createAdminClient } from "@/lib/supabase/server";
+import { createAdminClient, createClient } from "@/lib/supabase/server";
 import { reservationSchema } from "@/lib/schema";
 import { sendReservationConfirmation, sendAdminNotification } from "@/lib/email";
 import type { Reservation } from "@/types";
@@ -17,10 +17,21 @@ export async function POST(request: NextRequest) {
             );
         }
 
+        // Check if the requester is a logged-in user — store their ID on the reservation
+        // so we can send them targeted status-change notifications later.
+        let customerId: string | null = null;
+        try {
+            const userClient = await createClient();
+            const { data: { user } } = await userClient.auth.getUser();
+            customerId = user?.id ?? null;
+        } catch {
+            // Guest checkout — no user ID available
+        }
+
         const supabase = createAdminClient();
         const { data, error } = await supabase
             .from("reservations")
-            .insert([parsed.data])
+            .insert([{ ...parsed.data, user_id: customerId }])
             .select()
             .single();
 
@@ -40,16 +51,17 @@ export async function POST(request: NextRequest) {
             console.error("Email send error:", emailErr);
         }
 
-        // Emit real-time event to admin dashboard
+        // 1. Notify admin dashboard (Realtime + Socket.IO + push)
         try {
             await sendNotification({
-                userId: null,
+                userId: null,  // null = admin broadcast
                 title: "New Reservation Received",
                 body: `${reservation.name} booked a table for ${reservation.guests} guests on ${reservation.date} at ${reservation.time}.`,
                 type: "reservation",
+                metadata: { reservation_id: reservation.id, customer_name: reservation.name },
                 url: `/admin/reservations`,
             });
-            
+
             const g = globalThis as typeof globalThis & { io?: { to: (room: string) => { emit: (event: string, data: unknown) => void } } };
             g.io?.to("admin-room").emit("new_reservation", {
                 name: reservation.name,
@@ -58,6 +70,20 @@ export async function POST(request: NextRequest) {
                 date: reservation.date,
             });
         } catch {}
+
+        // 2. Send acknowledgement notification to the customer (if logged in)
+        if (customerId) {
+            try {
+                await sendNotification({
+                    userId: customerId,
+                    title: "Reservation Received ✓",
+                    body: `Your table for ${reservation.guests} on ${reservation.date} at ${reservation.time} is pending confirmation. We'll notify you shortly.`,
+                    type: "reservation",
+                    metadata: { reservation_id: reservation.id },
+                    url: `/reservations`,
+                });
+            } catch {}
+        }
 
         return NextResponse.json({ success: true, id: reservation.id }, { status: 201 });
     } catch (err) {

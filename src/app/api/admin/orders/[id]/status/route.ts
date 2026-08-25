@@ -26,14 +26,14 @@ const NOTIFICATION_TRIGGERS: Partial<Record<OrderStatus, {
     body: (orderId: string, extra?: Record<string, any>) => string;
 }>> = {
     processing: {
-        title: (id) => "Order Received ✓",
+        title: (id) => "Order Received & Preparing 👨‍🍳",
         body: (id) =>
-            `Your order #${id.slice(0, 8).toUpperCase()} has been received and is being processed.`,
+            `Your order #${id.slice(0, 8).toUpperCase()} has been received and is being prepared in our kitchen.`,
     },
-    preparing: {
-        title: (id) => "We're Preparing Your Order 👨‍🍳",
+    ready: {
+        title: (id) => "Order Ready for Pickup 🍱",
         body: (id) =>
-            `Your order #${id.slice(0, 8).toUpperCase()} is now being prepared in our kitchen.`,
+            `Your order #${id.slice(0, 8).toUpperCase()} is ready and awaiting pickup/dispatch.`,
     },
     out_for_delivery: {
         title: (id) => "Your Order is On the Way 🚚",
@@ -43,11 +43,6 @@ const NOTIFICATION_TRIGGERS: Partial<Record<OrderStatus, {
                 : "";
             return `Your order #${id.slice(0, 8).toUpperCase()} has been picked up and is heading to you.${driverInfo}`;
         },
-    },
-    completed: {
-        title: (id) => "Order Delivered 🎉",
-        body: (id) =>
-            `Your order #${id.slice(0, 8).toUpperCase()} has been delivered. Enjoy your meal!`,
     },
     cancelled: {
         title: (id) => "Order Cancelled",

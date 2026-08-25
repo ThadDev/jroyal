@@ -107,7 +107,7 @@ export async function GET(
             console.error("[payments/verify] Update error:", updateError);
         }
 
-        // 7. Send notification to admin dashboard
+        // 7. Send notifications to admin dashboard and customer
         try {
             await sendNotification({
                 userId: null, // Broadcast to all admins
@@ -122,6 +122,19 @@ export async function GET(
                 },
                 url: `/admin/orders`,
             });
+            if (order.user_id) {
+                await sendNotification({
+                    userId: order.user_id,
+                    title: "Order Received & Preparing 👨‍🍳",
+                    body: `Payment confirmed! Your order #${order.id.slice(0, 8).toUpperCase()} has been received and is being prepared.`,
+                    type: "order_status",
+                    metadata: {
+                        order_id: order.id,
+                        order_status: "processing",
+                    },
+                    url: `/dashboard/orders/${order.id}/track`,
+                });
+            }
         } catch (notifyErr) {
             console.error("[payments/verify] Notification trigger warning:", notifyErr);
         }

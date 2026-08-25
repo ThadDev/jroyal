@@ -27,6 +27,7 @@ export type ReservationStatus = "pending" | "confirmed" | "cancelled";
 
 export interface Reservation {
     id: string;
+    user_id: string | null;    // set if the customer has an account
     name: string;
     email: string;
     phone: string;
@@ -176,20 +177,16 @@ export interface Testimonial {
 export type OrderStatus =
     | "pending"
     | "processing"
-    | "preparing"
     | "ready"
     | "out_for_delivery"
-    | "completed"
     | "cancelled";
 
 /** Maps backend status → customer-friendly label */
 export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
     pending: "Pending Payment",
-    processing: "Order Received",
-    preparing: "Being Prepared",
+    processing: "Being Prepared",
     ready: "Ready for Pickup",
     out_for_delivery: "On the Way",
-    completed: "Delivered",
     cancelled: "Cancelled",
 };
 
@@ -236,7 +233,7 @@ export interface Driver {
 }
 
 // ── Notifications ────────────────────────────────────────────
-export type NotificationType = "order" | "reservation" | "signup" | "payment" | "cancellation" | "system" | "order_status";
+export type NotificationType = "order" | "reservation" | "signup" | "payment" | "cancellation" | "system" | "order_status" | "order_pending";
 
 export interface AppNotification {
     id: string;

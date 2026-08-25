@@ -21,20 +21,16 @@ interface OrderStatusSelectProps {
 const ALL_STATUSES: OrderStatus[] = [
     "pending",
     "processing",
-    "preparing",
     "ready",
     "out_for_delivery",
-    "completed",
     "cancelled",
 ];
 
 const STATUS_CLASSES: Record<OrderStatus, string> = {
     pending: "bg-amber-500/10 text-amber-400 border-amber-500/20",
-    processing: "bg-blue-500/10 text-blue-400 border-blue-500/20",
-    preparing: "bg-purple-500/10 text-purple-400 border-purple-500/20",
+    processing: "bg-purple-500/10 text-purple-400 border-purple-500/20",
     ready: "bg-teal-500/10 text-teal-400 border-teal-500/20",
     out_for_delivery: "bg-blue-400/10 text-blue-300 border-blue-400/20",
-    completed: "bg-green-500/10 text-green-400 border-green-500/20",
     cancelled: "bg-red-500/10 text-red-400 border-red-500/20",
 };
 

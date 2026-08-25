@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { initializePaystackTransaction } from "@/lib/paystack/initialize";
+import { sendNotification } from "@/lib/notifications";
 import { MEALS } from "@/lib/data/meals";
 import { ADDONS } from "@/lib/data/addons";
 import type { CartItem } from "@/types";
@@ -208,6 +209,39 @@ export async function POST(request: NextRequest) {
             const message = err instanceof Error ? err.message : "Paystack initialization failed";
             console.error("[payments/initialize] Paystack error:", message);
             return NextResponse.json({ error: message }, { status: 502 });
+        }
+
+        // 6b. Send immediate notification to admin about new order (Payment Pending)
+        if (!order_id) {
+            try {
+                await sendNotification({
+                    userId: null, // Broadcast to all admins
+                    title: "New Order (Payment Pending) ⏳",
+                    body: `${nameToUse} (${customer_phone?.trim() || "No phone"}) placed order #${orderIdToUse.slice(0, 8).toUpperCase()} for ₦${totalAmountNaira.toLocaleString("en-NG")}. Payment is pending.`,
+                    type: "order_pending",
+                    metadata: {
+                        order_id: orderIdToUse,
+                        reference,
+                        amount: totalAmountNaira,
+                        customer_name: nameToUse,
+                        customer_phone: customer_phone?.trim(),
+                    },
+                    url: `/admin/orders/${orderIdToUse}`,
+                });
+
+                const io = (global as unknown as { io?: { to: (room: string) => { emit: (event: string, data: unknown) => void } } }).io;
+                if (io) {
+                    io.to("admin-room").emit("new_order_pending", {
+                        order_id: orderIdToUse,
+                        name: nameToUse,
+                        phone: customer_phone?.trim(),
+                        amount: totalAmountNaira,
+                        reference,
+                    });
+                }
+            } catch (notifyErr) {
+                console.error("[payments/initialize] Admin notification warning:", notifyErr);
+            }
         }
 
         // 7. Return payload for frontend Paystack Inline trigger

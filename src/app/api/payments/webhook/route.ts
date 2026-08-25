@@ -115,7 +115,7 @@ export async function POST(request: NextRequest) {
 
     // 10. Notify admin via existing infrastructure
 
-    // 10a. Supabase notification (triggers Realtime for the admin dashboard)
+    // 10a. Supabase notification (triggers Realtime for the admin dashboard & customer)
     try {
         await sendNotification({
             userId: null, // null = admin broadcast
@@ -130,6 +130,19 @@ export async function POST(request: NextRequest) {
             },
             url: `/admin/orders/${order.id}`,
         });
+        if (order.user_id) {
+            await sendNotification({
+                userId: order.user_id,
+                title: "Order Received & Preparing 👨‍🍳",
+                body: `Payment confirmed! Your order #${order.id.slice(0, 8).toUpperCase()} has been received and is being prepared.`,
+                type: "order_status",
+                metadata: {
+                    order_id: order.id,
+                    order_status: "processing",
+                },
+                url: `/dashboard/orders/${order.id}/track`,
+            });
+        }
     } catch (notifyErr) {
         // Non-fatal — order is already marked paid, notification failure doesn't block
         console.error("[payments/webhook] Notification error:", notifyErr);

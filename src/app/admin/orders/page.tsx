@@ -15,16 +15,12 @@ function getStatusBadge(status: OrderStatus, paymentStatus: string) {
         };
     }
     switch (status) {
-        case "completed":
-            return { label: ORDER_STATUS_LABELS.completed, color: "bg-green-500/10 text-green-400 border-green-500/20", icon: CheckCircle2 };
         case "out_for_delivery":
             return { label: ORDER_STATUS_LABELS.out_for_delivery, color: "bg-blue-400/10 text-blue-300 border-blue-400/20", icon: Truck };
         case "ready":
             return { label: ORDER_STATUS_LABELS.ready, color: "bg-teal-500/10 text-teal-400 border-teal-500/20", icon: PackageCheck };
-        case "preparing":
-            return { label: ORDER_STATUS_LABELS.preparing, color: "bg-purple-500/10 text-purple-400 border-purple-500/20", icon: ChefHat };
         case "processing":
-            return { label: ORDER_STATUS_LABELS.processing, color: "bg-blue-500/10 text-blue-400 border-blue-500/20", icon: Package };
+            return { label: ORDER_STATUS_LABELS.processing, color: "bg-purple-500/10 text-purple-400 border-purple-500/20", icon: ChefHat };
         case "cancelled":
             return { label: ORDER_STATUS_LABELS.cancelled, color: "bg-red-500/10 text-red-400 border-red-500/20", icon: XCircle };
         default:
