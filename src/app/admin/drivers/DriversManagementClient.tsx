@@ -13,8 +13,10 @@ import {
     Loader2,
     Search,
     ShieldAlert,
+    UploadCloud,
 } from "lucide-react";
 import { useToast } from "@/context/ToastContext";
+import { createClient } from "@/lib/supabase/client";
 import type { Driver, VehicleType, DriverStatus } from "@/types";
 
 const VEHICLE_OPTIONS: { value: VehicleType; label: string }[] = [
@@ -44,6 +46,53 @@ export default function DriversManagementClient() {
         status: "active" as DriverStatus,
         notes: "",
     });
+    const [uploadingAvatar, setUploadingAvatar] = useState(false);
+
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        if (!file.type.startsWith("image/")) {
+            showToast("Please select a valid image file", "error");
+            return;
+        }
+
+        try {
+            setUploadingAvatar(true);
+            const supabase = createClient();
+            const fileExt = file.name.split(".").pop() || "jpg";
+            const fileName = `driver_${Date.now()}_${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
+
+            // Attempt upload to driver-avatars bucket first, fallback to gallery or meal-images
+            let uploadResult = await supabase.storage.from("driver-avatars").upload(fileName, file, { upsert: true });
+            let bucketName = "driver-avatars";
+
+            if (uploadResult.error) {
+                uploadResult = await supabase.storage.from("gallery").upload(fileName, file, { upsert: true });
+                bucketName = "gallery";
+            }
+
+            if (uploadResult.error) {
+                uploadResult = await supabase.storage.from("meal-images").upload(fileName, file, { upsert: true });
+                bucketName = "meal-images";
+            }
+
+            if (uploadResult.error) {
+                throw uploadResult.error;
+            }
+
+            const { data } = supabase.storage.from(bucketName).getPublicUrl(fileName);
+            if (data?.publicUrl) {
+                setForm((prev) => ({ ...prev, avatar_url: data.publicUrl }));
+                showToast("Driver photo uploaded successfully", "success");
+            }
+        } catch (err: any) {
+            console.error("Avatar upload error:", err);
+            showToast(`Upload failed: ${err.message || "Unknown error"}`, "error");
+        } finally {
+            setUploadingAvatar(false);
+        }
+    };
 
     const fetchDrivers = useCallback(async () => {
         setLoading(true);
@@ -400,16 +449,52 @@ export default function DriversManagementClient() {
                             </div>
 
                             <div>
-                                <label className="block text-xs text-white/60 mb-1 font-semibold">
-                                    Avatar Image URL (Optional)
+                                <label className="block text-xs text-white/60 mb-2 font-semibold">
+                                    Driver Photo / Avatar
                                 </label>
-                                <input
-                                    type="text"
-                                    placeholder="https://..."
-                                    value={form.avatar_url}
-                                    onChange={(e) => setForm({ ...form, avatar_url: e.target.value })}
-                                    className="w-full bg-obsidian border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-gold-500/50"
-                                />
+                                <div className="flex items-center gap-3">
+                                    <div className="w-14 h-14 rounded-full bg-obsidian border border-white/10 flex items-center justify-center overflow-hidden flex-shrink-0 relative group">
+                                        {form.avatar_url ? (
+                                            <>
+                                                <img src={form.avatar_url} alt="Driver preview" className="w-full h-full object-cover" />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setForm({ ...form, avatar_url: "" })}
+                                                    className="absolute inset-0 bg-black/75 text-red-400 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity text-xs font-bold"
+                                                    title="Remove photo"
+                                                >
+                                                    <XCircle size={20} />
+                                                </button>
+                                            </>
+                                        ) : (
+                                            <User size={24} className="text-white/30" />
+                                        )}
+                                    </div>
+
+                                    <div className="flex-1">
+                                        <label className="inline-flex items-center gap-2 px-3.5 py-2 bg-white/5 border border-white/10 rounded-lg text-xs font-semibold text-white/80 hover:bg-white/10 hover:border-gold-500/30 transition-all cursor-pointer">
+                                            {uploadingAvatar ? (
+                                                <>
+                                                    <Loader2 size={14} className="animate-spin text-gold-400" />
+                                                    <span>Uploading photo...</span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <UploadCloud size={14} className="text-gold-400" />
+                                                    <span>{form.avatar_url ? "Change Photo" : "Upload Photo File"}</span>
+                                                </>
+                                            )}
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                onChange={handleFileUpload}
+                                                disabled={uploadingAvatar}
+                                                className="hidden"
+                                            />
+                                        </label>
+                                        <p className="text-[10px] text-white/30 mt-1">Select an image file (JPEG, PNG, WEBP)</p>
+                                    </div>
+                                </div>
                             </div>
 
                             <div>
