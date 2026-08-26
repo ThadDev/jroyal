@@ -17,7 +17,7 @@ export default function BranchSwitcherFloatingButton() {
     const { branch, resetBranch, showSelector } = useBranch();
 
     // Do not show on admin panel or when location selector modal is active
-    if (pathname?.startsWith("/admin") || showSelector) return null;
+    if (pathname?.startsWith("/admin") || pathname?.startsWith("/dashboard") || pathname?.startsWith("/auth") || showSelector) return null;
 
     return (
         <motion.div
