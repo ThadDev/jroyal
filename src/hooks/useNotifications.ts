@@ -17,6 +17,8 @@ export function useNotifications() {
     const supabase = createClient();
 
     const [userState, setUserState] = useState<{ id: string; isAdmin: boolean } | null>(null);
+    const [isRinging, setIsRinging] = useState(false);
+    const alarmIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
     // Audio setup + Browser Autoplay Unlocker
     useEffect(() => {
@@ -44,30 +46,26 @@ export function useNotifications() {
         return () => {
             window.removeEventListener("touchstart", unlockAudio);
             window.removeEventListener("click", unlockAudio);
+            if (alarmIntervalRef.current) {
+                clearInterval(alarmIntervalRef.current);
+            }
         };
     }, []);
 
-    // Reliable dual-tone audio chime (uses Web Audio API fallback if HTML5 Audio is blocked)
-    const playNotificationSound = useCallback(() => {
-        try {
-            if (audioRef.current) {
-                audioRef.current.currentTime = 0;
-                const playPromise = audioRef.current.play();
-                if (playPromise !== undefined) {
-                    playPromise.catch(() => {
-                        // Fallback to Web Audio API Synth Chime if HTML5 Audio play is blocked by autoplay
-                        playWebAudioChime();
-                    });
-                }
-            } else {
-                playWebAudioChime();
-            }
-        } catch {
-            playWebAudioChime();
+    // Stop continuous notification sound alarm
+    const stopSound = useCallback(() => {
+        if (alarmIntervalRef.current) {
+            clearInterval(alarmIntervalRef.current);
+            alarmIntervalRef.current = null;
         }
+        if (audioRef.current) {
+            audioRef.current.pause();
+            audioRef.current.currentTime = 0;
+        }
+        setIsRinging(false);
     }, []);
 
-    // Web Audio API Synthesizer Chime (Works 100% reliably without external MP3 dependencies)
+    // Reliable dual-tone audio chime (uses Web Audio API fallback if HTML5 Audio is blocked)
     const playWebAudioChime = () => {
         try {
             const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
@@ -104,6 +102,54 @@ export function useNotifications() {
             /* ignore audio failures */
         }
     };
+
+    // Continuous Alarm Beeping - Repeats until admin clicks or silences
+    const playNotificationSound = useCallback(() => {
+        if (alarmIntervalRef.current) {
+            clearInterval(alarmIntervalRef.current);
+            alarmIntervalRef.current = null;
+        }
+
+        setIsRinging(true);
+
+        const singleBeep = () => {
+            try {
+                if (audioRef.current) {
+                    audioRef.current.currentTime = 0;
+                    const playPromise = audioRef.current.play();
+                    if (playPromise !== undefined) {
+                        playPromise.catch(() => {
+                            playWebAudioChime();
+                        });
+                    }
+                } else {
+                    playWebAudioChime();
+                }
+            } catch {
+                playWebAudioChime();
+            }
+        };
+
+        // Play immediately
+        singleBeep();
+
+        // Repeat every 1.5 seconds until clicked
+        alarmIntervalRef.current = setInterval(() => {
+            singleBeep();
+        }, 1500);
+
+        // Auto silence alarm on any user screen click, touch, or key press
+        const handleAdminClickToSilence = () => {
+            stopSound();
+            window.removeEventListener("click", handleAdminClickToSilence, true);
+            window.removeEventListener("touchstart", handleAdminClickToSilence, true);
+            window.removeEventListener("keydown", handleAdminClickToSilence, true);
+        };
+
+        window.addEventListener("click", handleAdminClickToSilence, true);
+        window.addEventListener("touchstart", handleAdminClickToSilence, true);
+        window.addEventListener("keydown", handleAdminClickToSilence, true);
+    }, [stopSound]);
 
     // Trigger Mobile System Status Bar Notification
     const triggerSystemMobileNotification = useCallback((title: string, body: string, url = "/admin") => {
@@ -371,6 +417,7 @@ export function useNotifications() {
     }, [userState, playNotificationSound, triggerSystemMobileNotification]);
 
     const markAsRead = async (id: string) => {
+        stopSound();
         setNotifications((prev) =>
             prev.map((n) => (n.id === id ? { ...n, is_read: true } : n))
         );
@@ -384,6 +431,7 @@ export function useNotifications() {
     };
 
     const markAllAsRead = async () => {
+        stopSound();
         if (!userState) return;
 
         setNotifications((prev) =>
@@ -402,6 +450,8 @@ export function useNotifications() {
         notifications,
         unreadCount,
         loading,
+        isRinging,
+        stopSound,
         markAsRead,
         markAllAsRead,
     };

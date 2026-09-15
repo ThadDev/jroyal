@@ -1,4 +1,4 @@
-# Mama Onyinye LandMark
+# JRoyal App
 
 A production-ready luxury restaurant website with admin dashboard.
 

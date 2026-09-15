@@ -1,6 +1,6 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
-import { Bell, Check, Trash2, X, Circle } from "lucide-react";
+import { Bell, BellRing, Check, Trash2, X, Circle, VolumeX } from "lucide-react";
 import { useNotifications } from "@/hooks/useNotifications";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
@@ -9,7 +9,7 @@ import { formatDistanceToNow } from "date-fns";
 export default function NotificationDropdown() {
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
-    const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
+    const { notifications, unreadCount, isRinging, stopSound, markAsRead, markAllAsRead } = useNotifications();
 
     // Close when clicking outside
     useEffect(() => {
@@ -23,6 +23,7 @@ export default function NotificationDropdown() {
     }, []);
 
     const handleNotificationClick = (id: string, is_read: boolean, url?: string) => {
+        stopSound();
         if (!is_read) {
             markAsRead(id);
         }
@@ -32,11 +33,16 @@ export default function NotificationDropdown() {
     return (
         <div className="relative" ref={dropdownRef}>
             <button
-                onClick={() => setIsOpen(!isOpen)}
-                className="relative p-2 text-white/70 hover:text-gold-400 transition-colors focus:outline-none"
+                onClick={() => {
+                    if (isRinging) stopSound();
+                    setIsOpen(!isOpen);
+                }}
+                className={`relative p-2 transition-colors focus:outline-none ${
+                    isRinging ? "text-gold-400 animate-bounce" : "text-white/70 hover:text-gold-400"
+                }`}
                 aria-label="Notifications"
             >
-                <Bell size={20} />
+                {isRinging ? <BellRing size={20} className="animate-pulse text-gold-400" /> : <Bell size={20} />}
                 {unreadCount > 0 && (
                     <span className="absolute top-1 right-1 flex items-center justify-center w-4 h-4 text-[9px] font-bold text-obsidian bg-red-500 border border-obsidian rounded-full">
                         {unreadCount > 99 ? "99+" : unreadCount}
@@ -55,7 +61,17 @@ export default function NotificationDropdown() {
                     >
                         {/* Header */}
                         <div className="p-4 border-b border-white/10 flex items-center justify-between bg-white/[0.02]">
-                            <h3 className="font-serif text-lg font-bold text-white">Notifications</h3>
+                            <div className="flex items-center gap-2">
+                                <h3 className="font-serif text-lg font-bold text-white">Notifications</h3>
+                                {isRinging && (
+                                    <button
+                                        onClick={stopSound}
+                                        className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 border border-red-500/30 animate-pulse font-semibold"
+                                    >
+                                        <VolumeX size={12} /> Silence Alarm
+                                    </button>
+                                )}
+                            </div>
                             {unreadCount > 0 && (
                                 <button
                                     onClick={markAllAsRead}
