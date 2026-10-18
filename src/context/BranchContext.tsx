@@ -1,18 +1,4 @@
 "use client";
-
-/**
- * BranchContext
- * ─────────────
- * Provides the currently selected branch to all client components.
- *
- * SEO strategy:
- *  - SSR always renders the DEFAULT_BRANCH (Nsukka/Landmark) which is the
- *    canonical location and is fully indexed by search engines.
- *  - On client mount we hydrate from localStorage silently.
- *  - If no branch has been saved yet, showSelector → true so the
- *    LocationSelector overlay appears.
- */
-
 import React, {
   createContext,
   useCallback,

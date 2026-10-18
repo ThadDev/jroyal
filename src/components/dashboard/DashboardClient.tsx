@@ -20,7 +20,7 @@ const PROMO_BANNERS = [
         id: "promo1",
         title: `Special offer for ${new Date().toLocaleString('default', { month: 'long' })}!`,
         buttonText: "Order now",
-        image: "https://i.pinimg.com/1200x/75/7f/10/757f1002f30dc855e214c5857d50c668.jpg?q=80&w=800&auto=format&fit=crop",
+        image: "images/menu/jroyal.jpg",
         gradient: "from-green-900/90 via-charcoal/70 to-transparent"
     },
     {
