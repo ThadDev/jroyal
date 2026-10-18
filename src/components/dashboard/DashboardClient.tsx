@@ -2,6 +2,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useMeals } from "@/context/MealsContext";
+import { useTheme } from "@/context/ThemeContext";
 import Link from "next/link";
 import { ArrowRight, Utensils, Search, SlidersHorizontal } from "lucide-react";
 import type { Meal, MealCategory } from "@/types";
@@ -37,6 +38,14 @@ const PROMO_BANNERS = [
         link: "/reservations",
         image: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=800&auto=format&fit=crop",
         gradient: "from-rose-900/90 via-charcoal/70 to-transparent"
+    },
+    {
+        id: "promo4",
+        title: "Have an event? Reserve a table",
+        buttonText: "Reserve table",
+        link: "/reservations",
+        image: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=800&auto=format&fit=crop",
+        gradient: "from-rose-900/90 via-charcoal/70 to-transparent"
     }
 ];
 
@@ -53,6 +62,8 @@ const CATEGORY_ICONS: Record<string, string> = {
 export default function DashboardClient({ firstName }: DashboardClientProps) {
     const { meals, loading, addOns } = useMeals();
     const router = useRouter();
+    const { theme } = useTheme();
+    const L = theme === "light";
     const [searchQuery, setSearchQuery] = useState("");
     const [searchFocused, setSearchFocused] = useState(false);
     const [activeMeal, setActiveMeal] = useState<Meal | null>(null);
@@ -140,10 +151,10 @@ export default function DashboardClient({ firstName }: DashboardClientProps) {
         if (!categoryScrollRef.current) return;
         const scrollLeft = categoryScrollRef.current.scrollLeft;
         const children = Array.from(categoryScrollRef.current.children) as HTMLElement[];
-        
+
         let closestIndex = 0;
         let minDiff = Infinity;
-        
+
         children.forEach((child, index) => {
             const diff = Math.abs(child.offsetLeft - scrollLeft);
             if (diff < minDiff) {
@@ -214,13 +225,11 @@ export default function DashboardClient({ firstName }: DashboardClientProps) {
                         style={{
                             transition: "border-color 0.2s, box-shadow 0.3s",
                             boxShadow: searchFocused
-                                ? "0 0 0 3px rgba(201,168,76,0.25), 0 0 20px rgba(201,168,76,0.12)"
+                                ? "0 0 0 3px rgba(246,168,28,0.25), 0 0 20px rgba(246,168,28,0.12)"
                                 : "none",
                         }}
-                        className={`w-full bg-white/5 rounded-full py-3.5 pl-12 pr-12 text-sm text-white placeholder-white/40 focus:outline-none transition-all border ${searchFocused
-                                ? "border-gold-500/60"
-                                : "border-white/10"
-                            }`}
+                        className={`w-full rounded-full py-3.5 pl-12 pr-12 text-sm focus:outline-none transition-all border ${searchFocused ? "border-gold-500/60" : (L ? "border-black/10" : "border-white/10")
+                            } ${L ? "bg-white/70 text-gray-900 placeholder:text-gray-500" : "bg-white/5 text-white placeholder:text-white/40"}`}
                     />
                     <button type="submit" className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40 hover:text-gold-400 transition-colors" aria-label="Search">
                         <Search size={18} />
@@ -249,6 +258,7 @@ export default function DashboardClient({ firstName }: DashboardClientProps) {
                             <div
                                 key={promo.id}
                                 className="snap-center relative overflow-hidden rounded-2xl flex-shrink-0 w-full h-[160px] md:h-[200px] flex flex-col justify-center p-6 shadow-xl"
+                                style={L ? { border: "1.5px solid rgba(171,35,48,0.25)", borderRadius: "16px" } : {}}
                             >
                                 <img src={promo.image} alt={promo.title} className="absolute inset-0 w-full h-full object-cover" />
                                 <div className={`absolute inset-0 bg-gradient-to-r ${promo.gradient}`} />
@@ -277,8 +287,8 @@ export default function DashboardClient({ firstName }: DashboardClientProps) {
                                 key={index}
                                 onClick={() => scrollToBanner(index)}
                                 className={`h-1.5 rounded-full transition-all duration-300 ${activeBannerIndex === index
-                                        ? "w-5 bg-gold-500"
-                                        : "w-2 bg-white/20 hover:bg-white/40"
+                                    ? "w-5 bg-gold-500"
+                                    : "w-2 bg-[#AB2330] hover:bg-white/40"
                                     }`}
                                 aria-label={`Go to slide ${index + 1}`}
                             />
@@ -290,8 +300,8 @@ export default function DashboardClient({ firstName }: DashboardClientProps) {
             {/* ── Top Categories Icons ── */}
             <section className="px-4 md:px-6 py-2 max-w-7xl mx-auto">
                 <div className="flex items-center justify-between mb-4">
-                    <h2 className="font-serif text-lg text-white font-bold m-0">Top Categories</h2>
-                    <Link href="/dashboard/menu" className="text-xs text-white/50 hover:text-gold-400 transition-colors">See all</Link>
+                    <h2 className="font-serif text-lg font-bold m-0" style={{ color: L ? "#AB2330" : "#F5F0E8" }}>Top Categories</h2>
+                    <Link href="/dashboard/menu" className="text-xs hover:opacity-80 transition-opacity font-semibold" style={{ color: L ? "#AB2330" : "rgba(255,255,255,0.45)" }}>See all</Link>
                 </div>
 
                 <div
@@ -306,14 +316,14 @@ export default function DashboardClient({ firstName }: DashboardClientProps) {
                             onClick={() => handleCategoryClick(cat)}
                             className="flex flex-col items-center justify-start gap-2 flex-shrink-0 snap-start active:scale-95 transition-transform w-[72px]"
                         >
-                            <div className={`w-[72px] h-[72px] rounded-full overflow-hidden border-2 border-transparent p-0.5`}>
+                            <div className={`w-[72px] h-[72px] rounded-full overflow-hidden border-2 border-royal-500 p-0.5`}>
                                 <img
                                     src={CATEGORY_ICONS[cat as string] || CATEGORY_ICONS.main_course}
                                     alt={MEAL_CATEGORY_LABELS[cat]}
                                     className="w-full h-full object-cover rounded-full"
                                 />
                             </div>
-                            <span className={`text-[11px] font-sans font-semibold text-center leading-tight text-white/80`}>
+                            <span className="text-[11px] font-sans font-semibold text-center leading-tight" style={{ color: L ? "#1A1A1A" : "rgba(255,255,255,0.80)" }}>
                                 {MEAL_CATEGORY_LABELS[cat]}
                             </span>
                         </button>
@@ -325,10 +335,15 @@ export default function DashboardClient({ firstName }: DashboardClientProps) {
                     {categoriesInUse.map((_, index) => (
                         <div
                             key={index}
-                            className={`h-1 rounded-full transition-all duration-300 ${activeCategoryIndex === index
-                                    ? "w-4 bg-gold-500"
-                                    : "w-1 bg-white/20"
-                                }`}
+                            style={{
+                                height: "4px",
+                                borderRadius: "99px",
+                                transition: "all 0.3s",
+                                width: activeCategoryIndex === index ? "16px" : "4px",
+                                background: activeCategoryIndex === index
+                                    ? (L ? "#AB2330" : "#F6A81C")
+                                    : (L ? "rgba(0,0,0,0.18)" : "rgba(255,255,255,0.20)"),
+                            }}
                         />
                     ))}
                 </div>
@@ -337,8 +352,8 @@ export default function DashboardClient({ firstName }: DashboardClientProps) {
             {/* ── Featured Meals ── */}
             <section className="px-4 md:px-6 py-6 max-w-7xl mx-auto">
                 <div className="flex items-center justify-between mb-4">
-                    <h2 className="font-serif text-lg text-white font-bold m-0">Featured Picks</h2>
-                    <Link href="/dashboard/menu" className="text-xs text-white/50 hover:text-gold-400 transition-colors">See all</Link>
+                    <h2 className="font-serif text-lg font-bold m-0" style={{ color: L ? "#AB2330" : "#F5F0E8" }}>Featured Picks</h2>
+                    <Link href="/dashboard/menu" className="text-xs hover:opacity-80 transition-opacity font-semibold" style={{ color: L ? "#AB2330" : "rgba(255,255,255,0.45)" }}>See all</Link>
                 </div>
 
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
@@ -359,13 +374,14 @@ export default function DashboardClient({ firstName }: DashboardClientProps) {
             {/* ── Quick Menu Preview ── */}
             <section ref={menuRef} className="px-4 md:px-6 py-8 max-w-7xl mx-auto">
                 <div className="flex items-center justify-between mb-6">
-                    <h2 className="font-serif text-2xl text-white font-bold m-0 flex items-center gap-2">
-                        <Utensils size={20} className="text-gold-500" />
+                    <h2 className="font-serif text-2xl font-bold m-0 flex items-center gap-2" style={{ color: L ? "#AB2330" : "#F5F0E8" }}>
+                        <Utensils size={20} style={{ color: L ? "#AB2330" : "#F6A81C" }} />
                         Browse Menu
                     </h2>
                     <Link
                         href="/dashboard/menu"
-                        className="flex items-center gap-1 text-xs text-gold-400 hover:text-gold-300 transition-colors font-semibold"
+                        className="flex items-center gap-1 text-xs hover:opacity-80 transition-opacity font-semibold"
+                        style={{ color: L ? "#AB2330" : "#F6A81C" }}
                     >
                         Full menu <ArrowRight size={12} />
                     </Link>
@@ -384,13 +400,14 @@ export default function DashboardClient({ firstName }: DashboardClientProps) {
                             return (
                                 <div key={cat}>
                                     <div className="flex items-center gap-3 mb-4">
-                                        <h3 className="font-serif text-lg text-gold-400 font-bold m-0 whitespace-nowrap">
+                                        <h3 className="font-serif text-lg font-bold m-0 whitespace-nowrap" style={{ color: L ? "#1A1A1A" : "#F6A81C" }}>
                                             {MEAL_CATEGORY_LABELS[cat]}
                                         </h3>
-                                        <div className="h-px flex-1 bg-gold-500/20" />
+                                        <div className="h-px flex-1" style={{ background: L ? "rgba(0,0,0,0.15)" : "rgba(246,168,28,0.20)" }} />
                                         <button
                                             onClick={() => router.push(`/dashboard/menu?category=${cat}`)}
-                                            className="text-xs text-white/30 hover:text-gold-400 transition-colors whitespace-nowrap"
+                                            className="text-xs whitespace-nowrap font-semibold hover:opacity-70 transition-opacity"
+                                            style={{ color: L ? "rgba(26,26,26,0.45)" : "rgba(255,255,255,0.30)" }}
                                         >
                                             See all
                                         </button>
@@ -405,7 +422,12 @@ export default function DashboardClient({ firstName }: DashboardClientProps) {
                         })}
                         <Link
                             href="/dashboard/menu"
-                            className="flex items-center justify-center gap-2 py-4 rounded-2xl border border-gold-500/20 bg-gold-500/5 hover:bg-gold-500/10 text-gold-400 text-sm font-semibold transition-all"
+                            className="flex items-center justify-center gap-2 py-4 rounded-2xl text-sm font-semibold transition-all"
+                            style={{
+                                border: L ? "1px solid rgba(0,0,0,0.15)" : "1px solid rgba(246,168,28,0.20)",
+                                background: L ? "rgba(0,0,0,0.04)" : "rgba(246,168,28,0.05)",
+                                color: L ? "#1A1A1A" : "#F6A81C",
+                            }}
                         >
                             View full menu <ArrowRight size={14} />
                         </Link>

@@ -4,100 +4,102 @@ import Link from "next/link";
 import Image from "next/image";
 import { MapPin, Clock, Phone, Mail, Instagram, Facebook, Twitter } from "lucide-react";
 import { useBranch } from "@/context/BranchContext";
+import { useTheme } from "@/context/ThemeContext";
+import { usePathname } from "next/navigation";
 import ChangeBranchButton from "@/components/ui/ChangeBranchButton";
 
 export default function Footer() {
     const currentYear = new Date().getFullYear();
     const { branch } = useBranch();
+    const { theme } = useTheme();
+    const pathname = usePathname();
+    const L = theme === "light";
+
+    const footerBg = L ? "#FFF1D2" : "#080810";
+    const topBorder = L ? "1px solid rgba(0,0,0,0.10)" : "1px solid rgba(255,255,255,0.05)";
+    const headingColor = L ? "#1A1A1A" : "#F6A81C";         // section headings
+    const iconColor = L ? "#AB2330" : "#F6A81C";         // contact icons
+    const textColor = L ? "rgba(26,26,26,0.60)" : "rgba(255,255,255,0.50)";
+    const linkColor = L ? "#1A1A1A" : "rgba(255,255,255,0.50)";
+    const linkActive = "#AB2330";
+    const dotColor = L ? "#AB2330" : "#F6A81C";
+    const dividerColor = L ? "rgba(0,0,0,0.10)" : "rgba(255,255,255,0.05)";
+    const socialBorder = L ? "rgba(0,0,0,0.15)" : "rgba(255,255,255,0.10)";
+    const socialText = L ? "rgba(26,26,26,0.50)" : "rgba(255,255,255,0.40)";
+    const copyText = L ? "rgba(26,26,26,0.35)" : "rgba(255,255,255,0.30)";
+
+    const isActive = (href: string) => pathname === href || pathname.startsWith(href);
+
+    const navLinks = [
+        { href: "/dashboard", label: "Home" },
+        { href: "/dashboard/menu", label: "Menu" },
+        { href: "/dashboard/orders", label: "Orders" },
+        { href: "/dashboard/cart", label: "Cart" },
+        { href: "/dashboard/settings", label: "Settings" },
+    ];
 
     return (
-        <footer className="bg-obsidian border-t border-white/5">
-            {/* Gold top stripe */}
+        <footer style={{ background: footerBg, borderTop: topBorder, transition: "background 0.3s" }}>
+            {/* Shimmer divider */}
             <div className="h-px w-full shimmer-gold opacity-60" />
 
             <div className="container-wide section-padding pt-16 pb-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
+
                     {/* Brand */}
                     <div className="lg:col-span-1">
                         <div className="mb-6">
-                            <Image
-                                src="/logo.png"
-                                alt="Jroyal Grills"
-                                width={140}
-                                height={56}
-                                className="object-contain h-12 w-auto"
-                            />
+                            <Image src="/logo.png" alt="Jroyal Grills" width={140} height={56} className="object-contain h-12 w-auto" />
                         </div>
-                        <p className="text-white/50 text-sm leading-relaxed mb-6">
+                        <p style={{ color: textColor, fontSize: "14px", lineHeight: "1.6", marginBottom: "1.5rem", fontFamily: "Inter,sans-serif" }}>
                             {branch.footerBlurb}
                         </p>
                         <div className="flex items-center gap-4">
-                            <a
-                                href="#"
-                                aria-label="Instagram"
-                                className="w-8 h-8 border border-white/10 flex items-center justify-center text-white/40 hover:border-gold-500 hover:text-gold-500 transition-all duration-200"
-                            >
-                                <Instagram size={14} />
-                            </a>
-                            <a
-                                href="#"
-                                aria-label="Facebook"
-                                className="w-8 h-8 border border-white/10 flex items-center justify-center text-white/40 hover:border-gold-500 hover:text-gold-500 transition-all duration-200"
-                            >
-                                <Facebook size={14} />
-                            </a>
-                            <a
-                                href="#"
-                                aria-label="Twitter"
-                                className="w-8 h-8 border border-white/10 flex items-center justify-center text-white/40 hover:border-gold-500 hover:text-gold-500 transition-all duration-200"
-                            >
-                                <Twitter size={14} />
-                            </a>
+                            {[
+                                { icon: Instagram, label: "Instagram" },
+                                { icon: Facebook, label: "Facebook" },
+                                { icon: Twitter, label: "Twitter" },
+                            ].map(({ icon: Icon, label }) => (
+                                <a key={label} href="#" aria-label={label}
+                                    style={{ width: "32px", height: "32px", border: `1px solid ${socialBorder}`, display: "flex", alignItems: "center", justifyContent: "center", color: socialText, transition: "all 0.2s", textDecoration: "none" }}
+                                    onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = iconColor; (e.currentTarget as HTMLElement).style.borderColor = iconColor; }}
+                                    onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = socialText; (e.currentTarget as HTMLElement).style.borderColor = socialBorder; }}
+                                >
+                                    <Icon size={14} />
+                                </a>
+                            ))}
                         </div>
                     </div>
 
-                    {/* Quick Links */}
+                    {/* Navigate */}
                     <div>
-                        <h3 className="font-serif text-sm font-semibold text-gold-500 uppercase tracking-widest mb-6">
+                        <h3 style={{ fontFamily: "'Playfair Display',serif", fontSize: "13px", fontWeight: 600, color: headingColor, textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: "1.5rem" }}>
                             Navigate
                         </h3>
-                        <ul className="space-y-3">
-                            {[
-                                { href: "/menu", label: "Our Menu" },
-                                { href: "/reservations", label: "Reservations" },
-                                { href: "/events", label: "Events & Catering" },
-                                { href: "/gallery", label: "Gallery" },
-                                { href: "/blog", label: "Blog" },
-                                { href: "/contact", label: "Contact Us" },
-                            ].map((link) => (
-                                <li key={link.href}>
-                                    <Link
-                                        href={link.href}
-                                        className="text-white/50 text-sm hover:text-gold-400 transition-colors"
-                                    >
-                                        {link.label}
-                                    </Link>
-                                </li>
-                            ))}
+                        <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                            {navLinks.map(({ href, label }) => {
+                                const active = isActive(href);
+                                return (
+                                    <li key={href}>
+                                        <Link href={href} style={{ fontFamily: "Inter,sans-serif", fontSize: "14px", color: active ? linkActive : linkColor, textDecoration: "none", fontWeight: active ? 600 : 400, display: "flex", alignItems: "center", gap: "6px" }}>
+                                            {active && <span style={{ width: "4px", height: "4px", borderRadius: "50%", background: linkActive, display: "inline-block" }} />}
+                                            {label}
+                                        </Link>
+                                    </li>
+                                );
+                            })}
                         </ul>
                     </div>
 
                     {/* Services */}
                     <div>
-                        <h3 className="font-serif text-sm font-semibold text-gold-500 uppercase tracking-widest mb-6">
+                        <h3 style={{ fontFamily: "'Playfair Display',serif", fontSize: "13px", fontWeight: 600, color: headingColor, textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: "1.5rem" }}>
                             Services
                         </h3>
-                        <ul className="space-y-3">
-                            {[
-                                "Restaurant Dining",
-                                "Corporate Events",
-                                "Outside Catering",
-                                "Private Dining",
-                                "Outdoor Catering",
-                                "Event Planning",
-                            ].map((s) => (
-                                <li key={s} className="text-white/50 text-sm flex items-center gap-2">
-                                    <span className="w-1 h-1 rounded-full bg-gold-700 flex-shrink-0" />
+                        <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                            {["Restaurant Dining", "Corporate Events", "Outside Catering", "Private Dining", "Outdoor Catering", "Event Planning"].map((s) => (
+                                <li key={s} style={{ display: "flex", alignItems: "center", gap: "8px", fontFamily: "Inter,sans-serif", fontSize: "14px", color: textColor }}>
+                                    <span style={{ width: "4px", height: "4px", borderRadius: "50%", background: dotColor, flexShrink: 0 }} />
                                     {s}
                                 </li>
                             ))}
@@ -106,38 +108,27 @@ export default function Footer() {
 
                     {/* Contact */}
                     <div>
-                        <h3 className="font-serif text-sm font-semibold text-gold-500 uppercase tracking-widest mb-6">
+                        <h3 style={{ fontFamily: "'Playfair Display',serif", fontSize: "13px", fontWeight: 600, color: headingColor, textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: "1.5rem" }}>
                             Find Us
                         </h3>
-                        <ul className="space-y-4">
-                            <li className="flex items-start gap-3">
-                                <MapPin size={14} className="text-gold-600 mt-1 flex-shrink-0" />
-                                <span className="text-white/50 text-sm leading-relaxed">
-                                    {branch.address}
-                                </span>
+                        <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "1rem" }}>
+                            <li style={{ display: "flex", alignItems: "flex-start", gap: "12px" }}>
+                                <MapPin size={14} style={{ color: iconColor, marginTop: "2px", flexShrink: 0 }} />
+                                <span style={{ fontFamily: "Inter,sans-serif", fontSize: "14px", color: textColor, lineHeight: 1.5 }}>{branch.address}</span>
                             </li>
-                            <li className="flex items-center gap-3">
-                                <Clock size={14} className="text-gold-600 flex-shrink-0" />
-                                <span className="text-white/50 text-sm">Mon 4PM–11PM · Tue–Sun 10AM–11PM</span>
+                            <li style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                                <Clock size={14} style={{ color: iconColor, flexShrink: 0 }} />
+                                <span style={{ fontFamily: "Inter,sans-serif", fontSize: "14px", color: textColor }}>Mon 4PM–11PM · Tue–Sun 10AM–11PM</span>
                             </li>
-                            <li className="flex items-center gap-3">
-                                <Phone size={14} className="text-gold-600 flex-shrink-0" />
-                                <a
-                                    href={`https://wa.me/${branch.whatsapp}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-white/50 text-sm hover:text-gold-400 transition-colors"
-                                    aria-label={`WhatsApp ${branch.name}`}
-                                >
+                            <li style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                                <Phone size={14} style={{ color: iconColor, flexShrink: 0 }} />
+                                <a href={`https://wa.me/${branch.whatsapp}`} target="_blank" rel="noopener noreferrer" style={{ fontFamily: "Inter,sans-serif", fontSize: "14px", color: textColor, textDecoration: "none" }}>
                                     {branch.phone}
                                 </a>
                             </li>
-                            <li className="flex items-center gap-3">
-                                <Mail size={14} className="text-gold-600 flex-shrink-0" />
-                                <a
-                                    href="mailto:info@jroyalgrills.com"
-                                    className="text-white/50 text-sm hover:text-gold-400 transition-colors"
-                                >
+                            <li style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                                <Mail size={14} style={{ color: iconColor, flexShrink: 0 }} />
+                                <a href="mailto:info@jroyalgrills.com" style={{ fontFamily: "Inter,sans-serif", fontSize: "14px", color: textColor, textDecoration: "none" }}>
                                     info@jroyalgrills.com
                                 </a>
                             </li>
@@ -146,13 +137,13 @@ export default function Footer() {
                 </div>
 
                 {/* Bottom bar */}
-                <div className="border-t border-white/5 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-                    <p className="text-white/30 text-xs">
+                <div style={{ borderTop: `1px solid ${dividerColor}`, paddingTop: "2rem", display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: "1rem", flexWrap: "wrap" }}>
+                    <p style={{ fontFamily: "Inter,sans-serif", fontSize: "12px", color: copyText, margin: 0 }}>
                         © {currentYear} {branch.name}. All rights reserved.
                     </p>
-                    <div className="flex items-center gap-6">
+                    <div style={{ display: "flex", alignItems: "center", gap: "1.5rem" }}>
                         <ChangeBranchButton variant="footer" />
-                        <Link href="/admin/login" className="text-white/20 text-xs hover:text-white/40 transition-colors">
+                        <Link href="/admin/login" style={{ fontFamily: "Inter,sans-serif", fontSize: "12px", color: copyText, textDecoration: "none" }}>
                             Admin
                         </Link>
                     </div>

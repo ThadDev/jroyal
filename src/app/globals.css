@@ -6,15 +6,39 @@
 
 @layer base {
   :root {
-    --gold: #D4A832;
-    --gold-light: #F0D98A;
-    --gold-dark: #8A6B1E;
+    --gold: #F6A81C;
+    --gold-light: #FBCF6A;
+    --gold-dark: #A36809;
     --royal-red: #AB2330;
     --royal-red-light: #C23545;
     --royal-red-dark: #6B1320;
     --obsidian: #0A0A0A;
     --charcoal: #1A1A1A;
     --cream: #F5F0E8;
+
+    /* Dark theme (default) */
+    --bg-primary: #0A0A0A;
+    --bg-secondary: #1A1A1A;
+    --bg-card: rgba(255, 255, 255, 0.04);
+    --bg-nav: rgba(8, 8, 16, 0.95);
+    --text-primary: #F5F0E8;
+    --text-secondary: rgba(255, 255, 255, 0.6);
+    --text-muted: rgba(255, 255, 255, 0.35);
+    --border-primary: rgba(255, 255, 255, 0.08);
+    --border-subtle: rgba(255, 255, 255, 0.05);
+  }
+
+  /* Light theme overrides */
+  html.light {
+    --bg-primary: #FFF1D2;
+    --bg-secondary: #FFE8B0;
+    --bg-card: rgba(255, 255, 255, 0.7);
+    --bg-nav: rgba(255, 241, 210, 0.97);
+    --text-primary: #1A1A1A;
+    --text-secondary: rgba(26, 26, 26, 0.65);
+    --text-muted: rgba(26, 26, 26, 0.40);
+    --border-primary: rgba(0, 0, 0, 0.10);
+    --border-subtle: rgba(0, 0, 0, 0.06);
   }
 
   * {
@@ -30,12 +54,12 @@
   }
 
   body {
-    background-color: #0A0A0A;
-    color: #F5F0E8;
-    /* Use the CSS variables injected by next/font on <html> */
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
     font-family: var(--font-inter), system-ui, sans-serif;
     line-height: 1.6;
     overflow-x: hidden;
+    transition: background-color 0.3s ease, color 0.3s ease;
   }
 
   h1,
@@ -50,8 +74,8 @@
   }
 
   ::selection {
-    background-color: #D4A83233;
-    color: #D4A832;
+    background-color: #F6A81C33;
+    color: #F6A81C;
   }
 
   *:focus-visible {
@@ -65,16 +89,16 @@
   }
 
   ::-webkit-scrollbar-track {
-    background: #1A1A1A;
+    background: var(--bg-secondary);
   }
 
   ::-webkit-scrollbar-thumb {
-    background: #D4A83244;
+    background: #F6A81C44;
     border-radius: 3px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: #D4A83288;
+    background: #F6A81C88;
   }
 }
 
@@ -84,7 +108,7 @@
   }
 
   .gold-gradient-text {
-    background: linear-gradient(135deg, #D4A832 0%, #D4A832 100%);
+    background: linear-gradient(135deg, #F6A81C 0%, #FBCF6A 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -92,7 +116,7 @@
 
   /* Premium gold-to-royal-red gradient — for decorative borders/accents ONLY */
   .gold-royal-border {
-    border-image: linear-gradient(135deg, #D4A832 0%, #E8C85C 40%, #AB2330 100%) 1;
+    border-image: linear-gradient(135deg, #F6A81C 0%, #F9BC44 40%, #AB2330 100%) 1;
   }
 
   .section-padding {
@@ -161,9 +185,9 @@
   /* Gold shimmer animation */
   .shimmer-gold {
     background: linear-gradient(90deg,
-        #D4A832 0%,
-        #F0D98A 50%,
-        #D4A832 100%);
+        #F6A81C 0%,
+        #FBCF6A 50%,
+        #F6A81C 100%);
     background-size: 200% auto;
     animation: shimmer 3s linear infinite;
   }
@@ -190,6 +214,20 @@
   .admin-table tr:hover td {
     @apply bg-white/2;
   }
+
+  /* Theme-aware utils */
+  .theme-bg-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-primary);
+  }
+
+  .theme-text {
+    color: var(--text-primary);
+  }
+
+  .theme-text-muted {
+    color: var(--text-muted);
+  }
 }
 
 @layer utilities {
@@ -200,4 +238,132 @@
   .bg-white\/2 {
     background-color: rgba(255, 255, 255, 0.02);
   }
+}
+
+/* ══════════════════════════════════════════════════
+   LIGHT MODE — flat selectors (no nesting required)
+   ══════════════════════════════════════════════════ */
+
+/* Page backgrounds */
+html.light .bg-obsidian {
+  background-color: #FFF1D2 !important;
+}
+
+html.light .bg-charcoal {
+  background-color: #FFE8B0 !important;
+}
+
+/* Semi-transparent white → warm card panels */
+html.light .bg-white\/5 {
+  background-color: rgba(0, 0, 0, 0.04) !important;
+}
+
+html.light .bg-white\/10 {
+  background-color: rgba(0, 0, 0, 0.07) !important;
+}
+
+/* Borders */
+html.light .border-white\/5 {
+  border-color: rgba(0, 0, 0, 0.07) !important;
+}
+
+html.light .border-white\/10 {
+  border-color: rgba(0, 0, 0, 0.10) !important;
+}
+
+html.light .border-white\/15 {
+  border-color: rgba(0, 0, 0, 0.13) !important;
+}
+
+html.light .border-white\/20 {
+  border-color: rgba(0, 0, 0, 0.16) !important;
+}
+
+/* Text — white shades → dark */
+html.light .text-white {
+  color: #1A1A1A !important;
+}
+
+html.light .text-white\/80 {
+  color: rgba(26, 26, 26, 0.80) !important;
+}
+
+html.light .text-white\/70 {
+  color: rgba(26, 26, 26, 0.70) !important;
+}
+
+html.light .text-white\/60 {
+  color: rgba(26, 26, 26, 0.60) !important;
+}
+
+html.light .text-white\/50 {
+  color: rgba(26, 26, 26, 0.50) !important;
+}
+
+html.light .text-white\/40 {
+  color: rgba(26, 26, 26, 0.40) !important;
+}
+
+html.light .text-white\/30 {
+  color: rgba(26, 26, 26, 0.30) !important;
+}
+
+html.light .text-white\/20 {
+  color: rgba(26, 26, 26, 0.20) !important;
+}
+
+html.light .text-white\/10 {
+  color: rgba(26, 26, 26, 0.10) !important;
+}
+
+/* Gold text → black on light (as requested) */
+html.light .text-gold-300 {
+  color: #1A1A1A !important;
+}
+
+html.light .text-gold-400 {
+  color: #1A1A1A !important;
+}
+
+html.light .text-gold-500 {
+  color: #1A1A1A !important;
+}
+
+html.light .text-gold-600 {
+  color: #1A1A1A !important;
+}
+
+/* Gold bg chips → keep warm amber tint */
+html.light .bg-gold-500\/10 {
+  background-color: rgba(246, 168, 28, 0.12) !important;
+}
+
+html.light .bg-gold-500\/20 {
+  background-color: rgba(246, 168, 28, 0.20) !important;
+}
+
+html.light .bg-gold-500\/5 {
+  background-color: rgba(246, 168, 28, 0.08) !important;
+}
+
+html.light .border-gold-500\/20 {
+  border-color: rgba(246, 168, 28, 0.30) !important;
+}
+
+html.light .border-gold-500\/30 {
+  border-color: rgba(246, 168, 28, 0.40) !important;
+}
+
+/* Cream text */
+html.light .text-cream-200 {
+  color: #1A1A1A !important;
+}
+
+html.light .text-cream-100 {
+  color: #1A1A1A !important;
+}
+
+/* Order cards */
+html.light .rounded-2xl.border {
+  border-color: rgba(0, 0, 0, 0.10) !important;
 }

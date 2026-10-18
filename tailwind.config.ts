@@ -1,6 +1,7 @@
 import type { Config } from "tailwindcss";
 
 const config: Config = {
+    darkMode: "class",
     content: [
         "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
         "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
@@ -10,11 +11,11 @@ const config: Config = {
         extend: {
             colors: {
                 gold: {
-                    300: "#F0D98A",
-                    400: "#E8C85C",
-                    500: "#D4A832",
-                    600: "#B8902B",
-                    700: "#8A6B1E",
+                    300: "#FBCF6A",
+                    400: "#F9BC44",
+                    500: "#F6A81C",
+                    600: "#D48C10",
+                    700: "#A36809",
                 },
                 royal: {
                     300: "#D95A67",
@@ -77,13 +78,15 @@ const config: Config = {
             },
             backgroundImage: {
                 "gold-gradient":
-                    "linear-gradient(135deg, #D4A832 0%, #F0D98A 50%, #D4A832 100%)",
+                    "linear-gradient(135deg, #F6A81C 0%, #FBCF6A 50%, #F6A81C 100%)",
                 "gold-royal-gradient":
-                    "linear-gradient(135deg, #D4A832 0%, #E8C85C 40%, #AB2330 100%)",
+                    "linear-gradient(135deg, #F6A81C 0%, #F9BC44 40%, #AB2330 100%)",
                 "dark-gradient":
                     "linear-gradient(180deg, #0A0A0A 0%, #1A1A1A 50%, #0A0A0A 100%)",
                 "hero-overlay":
                     "linear-gradient(to bottom, rgba(10,10,10,0.3) 0%, rgba(10,10,10,0.7) 100%)",
+                "light-gradient":
+                    "linear-gradient(180deg, #FFF1D2 0%, #FFE8B0 50%, #FFF1D2 100%)",
             },
             spacing: {
                 "18": "4.5rem",

@@ -3,6 +3,7 @@ import { Playfair_Display, Inter } from "next/font/google";
 import "./globals.css";
 import { ToastProvider } from "@/context/ToastContext";
 import { BranchProvider } from "@/context/BranchContext";
+import { ThemeProvider } from "@/context/ThemeContext";
 import WhatsAppButton from "@/components/ui/WhatsAppButton";
 import LocationSelector from "@/components/ui/LocationSelector";
 import BranchSwitcherFloatingButton from "@/components/ui/BranchSwitcherFloatingButton";
@@ -10,20 +11,20 @@ import NextTopLoader from "nextjs-toploader";
 
 // ── next/font: fonts are inlined (no external round-trip), font-display:swap ──
 const playfair = Playfair_Display({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  style: ["normal", "italic"],
-  variable: "--font-playfair",
-  display: "swap",
-  preload: true,
+    subsets: ["latin"],
+    weight: ["400", "500", "600", "700"],
+    style: ["normal", "italic"],
+    variable: "--font-playfair",
+    display: "swap",
+    preload: true,
 });
 
 const inter = Inter({
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
-  variable: "--font-inter",
-  display: "swap",
-  preload: true,
+    subsets: ["latin"],
+    weight: ["300", "400", "500", "600", "700"],
+    variable: "--font-inter",
+    display: "swap",
+    preload: true,
 });
 
 /**
@@ -160,26 +161,28 @@ export default function RootLayout({
                 />
             </head>
             <body>
-                <NextTopLoader
-                    color="#D4A832"
-                    initialPosition={0.08}
-                    crawlSpeed={200}
-                    height={3}
-                    crawl={true}
-                    showSpinner={false}
-                    easing="ease"
-                    speed={200}
-                    shadow="0 0 10px #D4A832,0 0 5px #D4A832"
-                />
-                <BranchProvider>
-                    {/* Location selector — shown once on first visit or when reset */}
-                    <LocationSelector />
-                    <ToastProvider>
-                        {children}
-                        <WhatsAppButton />
-                        <BranchSwitcherFloatingButton />
-                    </ToastProvider>
-                </BranchProvider>
+                <ThemeProvider>
+                    <NextTopLoader
+                        color="#F6A81C"
+                        initialPosition={0.08}
+                        crawlSpeed={200}
+                        height={3}
+                        crawl={true}
+                        showSpinner={false}
+                        easing="ease"
+                        speed={200}
+                        shadow="0 0 10px #F6A81C,0 0 5px #F6A81C"
+                    />
+                    <BranchProvider>
+                        {/* Location selector — shown once on first visit or when reset */}
+                        <LocationSelector />
+                        <ToastProvider>
+                            {children}
+                            <WhatsAppButton />
+                            <BranchSwitcherFloatingButton />
+                        </ToastProvider>
+                    </BranchProvider>
+                </ThemeProvider>
             </body>
         </html>
     );
