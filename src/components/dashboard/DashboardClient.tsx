@@ -39,14 +39,7 @@ const PROMO_BANNERS = [
         image: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=800&auto=format&fit=crop",
         gradient: "from-rose-900/90 via-charcoal/70 to-transparent"
     },
-    {
-        id: "promo4",
-        title: "Have an event? Reserve a table",
-        buttonText: "Reserve table",
-        link: "/reservations",
-        image: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=800&auto=format&fit=crop",
-        gradient: "from-rose-900/90 via-charcoal/70 to-transparent"
-    }
+
 ];
 
 const CATEGORY_ICONS: Record<string, string> = {
@@ -258,7 +251,7 @@ export default function DashboardClient({ firstName }: DashboardClientProps) {
                             <div
                                 key={promo.id}
                                 className="snap-center relative overflow-hidden rounded-2xl flex-shrink-0 w-full h-[160px] md:h-[200px] flex flex-col justify-center p-6 shadow-xl"
-                                style={L ? { border: "1.5px solid rgba(171,35,48,0.25)", borderRadius: "16px" } : {}}
+                                style={L ? { border: "2px solid rgba(171,35,48,0.25)", borderRadius: "16px" } : {}}
                             >
                                 <img src={promo.image} alt={promo.title} className="absolute inset-0 w-full h-full object-cover" />
                                 <div className={`absolute inset-0 bg-gradient-to-r ${promo.gradient}`} />
@@ -267,11 +260,11 @@ export default function DashboardClient({ firstName }: DashboardClientProps) {
                                         {promo.title}
                                     </h2>
                                     {promo.link ? (
-                                        <Link href={promo.link} className="inline-flex items-center justify-center bg-obsidian text-white text-xs font-bold px-5 py-2.5 rounded-full hover:bg-gold-500 hover:text-obsidian transition-colors shadow-md">
+                                        <Link href={promo.link} className="inline-flex items-center justify-center text-xs font-bold px-5 py-2.5 rounded-full transition-colors shadow-md" style={{ backgroundColor: "#AB2330", color: "#ffffff" }}>
                                             {promo.buttonText}
                                         </Link>
                                     ) : (
-                                        <button onClick={scrollToMenu} className="inline-flex items-center justify-center bg-obsidian text-white text-xs font-bold px-5 py-2.5 rounded-full hover:bg-gold-500 hover:text-obsidian transition-colors shadow-md">
+                                        <button onClick={scrollToMenu} className="inline-flex items-center justify-center text-xs font-bold px-5 py-2.5 rounded-full transition-colors shadow-md" style={{ backgroundColor: "#AB2330", color: "#ffffff" }}>
                                             {promo.buttonText}
                                         </button>
                                     )}
@@ -288,7 +281,7 @@ export default function DashboardClient({ firstName }: DashboardClientProps) {
                                 onClick={() => scrollToBanner(index)}
                                 className={`h-1.5 rounded-full transition-all duration-300 ${activeBannerIndex === index
                                     ? "w-5 bg-gold-500"
-                                    : "w-2 bg-[#AB2330] hover:bg-white/40"
+                                    : "w-2 bg-white/20 hover:bg-white/40"
                                     }`}
                                 aria-label={`Go to slide ${index + 1}`}
                             />
