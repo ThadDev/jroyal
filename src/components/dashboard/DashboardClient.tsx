@@ -256,7 +256,7 @@ export default function DashboardClient({ firstName }: DashboardClientProps) {
                                 <img src={promo.image} alt={promo.title} className="absolute inset-0 w-full h-full object-cover" />
                                 <div className={`absolute inset-0 bg-gradient-to-r ${promo.gradient}`} />
                                 <div className="relative z-10 w-[85%] sm:w-2/3">
-                                    <h2 className="text-white font-serif text-[17px] md:text-2xl font-bold leading-tight mb-4 drop-shadow-lg">
+                                    <h2 className="font-serif text-[17px] md:text-2xl font-bold leading-tight mb-4 drop-shadow-lg" style={{ color: "#ffffff" }}>
                                         {promo.title}
                                     </h2>
                                     {promo.link ? (
@@ -279,10 +279,16 @@ export default function DashboardClient({ firstName }: DashboardClientProps) {
                             <button
                                 key={index}
                                 onClick={() => scrollToBanner(index)}
-                                className={`h-1.5 rounded-full transition-all duration-300 ${activeBannerIndex === index
-                                    ? "w-5 bg-gold-500"
-                                    : "w-2 bg-white/20 hover:bg-white/40"
-                                    }`}
+                                style={{
+                                    height: "6px",
+                                    borderRadius: "99px",
+                                    border: "none",
+                                    padding: 0,
+                                    cursor: "pointer",
+                                    transition: "all 0.3s",
+                                    width: activeBannerIndex === index ? "20px" : "8px",
+                                    background: activeBannerIndex === index ? "#AB2330" : "rgba(171,35,48,0.35)",
+                                }}
                                 aria-label={`Go to slide ${index + 1}`}
                             />
                         ))}

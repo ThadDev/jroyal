@@ -4,6 +4,7 @@ import DashboardNav from "@/components/dashboard/DashboardNav";
 import DashboardShell from "@/components/dashboard/DashboardShell";
 import { CartProvider } from "@/context/CartContext";
 import { MealsProvider } from "@/context/MealsContext";
+import { ThemeProvider } from "@/context/ThemeContext";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
     const supabase = await createClient();
@@ -29,13 +30,15 @@ export default async function DashboardLayout({ children }: { children: React.Re
         "Guest";
 
     return (
-        <MealsProvider>
-            <CartProvider userId={user.id}>
-                <DashboardShell>
-                    <DashboardNav displayName={displayName} userId={user.id} />
-                    <main style={{ paddingBottom: "5rem" }}>{children}</main>
-                </DashboardShell>
-            </CartProvider>
-        </MealsProvider>
+        <ThemeProvider>
+            <MealsProvider>
+                <CartProvider userId={user.id}>
+                    <DashboardShell>
+                        <DashboardNav displayName={displayName} userId={user.id} />
+                        <main style={{ paddingBottom: "5rem" }}>{children}</main>
+                    </DashboardShell>
+                </CartProvider>
+            </MealsProvider>
+        </ThemeProvider>
     );
 }

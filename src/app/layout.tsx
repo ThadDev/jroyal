@@ -3,7 +3,7 @@ import { Playfair_Display, Inter } from "next/font/google";
 import "./globals.css";
 import { ToastProvider } from "@/context/ToastContext";
 import { BranchProvider } from "@/context/BranchContext";
-import { ThemeProvider } from "@/context/ThemeContext";
+import ThemeReset from "@/components/ui/ThemeReset";
 import WhatsAppButton from "@/components/ui/WhatsAppButton";
 import LocationSelector from "@/components/ui/LocationSelector";
 import BranchSwitcherFloatingButton from "@/components/ui/BranchSwitcherFloatingButton";
@@ -161,28 +161,27 @@ export default function RootLayout({
                 />
             </head>
             <body>
-                <ThemeProvider>
-                    <NextTopLoader
-                        color="#F6A81C"
-                        initialPosition={0.08}
-                        crawlSpeed={200}
-                        height={3}
-                        crawl={true}
-                        showSpinner={false}
-                        easing="ease"
-                        speed={200}
-                        shadow="0 0 10px #F6A81C,0 0 5px #F6A81C"
-                    />
-                    <BranchProvider>
-                        {/* Location selector — shown once on first visit or when reset */}
-                        <LocationSelector />
-                        <ToastProvider>
-                            {children}
-                            <WhatsAppButton />
-                            <BranchSwitcherFloatingButton />
-                        </ToastProvider>
-                    </BranchProvider>
-                </ThemeProvider>
+                <ThemeReset />
+                <NextTopLoader
+                    color="#F6A81C"
+                    initialPosition={0.08}
+                    crawlSpeed={200}
+                    height={3}
+                    crawl={true}
+                    showSpinner={false}
+                    easing="ease"
+                    speed={200}
+                    shadow="0 0 10px #F6A81C,0 0 5px #F6A81C"
+                />
+                <BranchProvider>
+                    {/* Location selector — shown once on first visit or when reset */}
+                    <LocationSelector />
+                    <ToastProvider>
+                        {children}
+                        <WhatsAppButton />
+                        <BranchSwitcherFloatingButton />
+                    </ToastProvider>
+                </BranchProvider>
             </body>
         </html>
     );
